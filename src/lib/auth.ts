@@ -98,6 +98,10 @@ export async function createAccount(
     return { success: false, error: error.message };
   }
 
+  if (data.user && !data.session) {
+    return { success: false, error: "Registration succeeded but email confirmation is required. Please disable email confirmation in Supabase Dashboard → Authentication → Providers → Email." };
+  }
+
   if (data.user) {
     const { error: profileError } = await supabase
       .from("profiles")
@@ -126,13 +130,13 @@ export async function login(
 ): Promise<{ success: boolean; error?: string }> {
   const email = usernameToEmail(username);
 
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error) {
-    return { success: false, error: `${error.message} (email: ${email})` };
+    return { success: false, error: "Invalid username or password" };
   }
 
   return { success: true };
