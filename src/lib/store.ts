@@ -124,26 +124,34 @@ export async function getTeamByNumber(number: number): Promise<Team | undefined>
   return teams.find((t) => t.number === number);
 }
 
-export async function addTeam(team: Team): Promise<void> {
-  const { data, error } = await supabase
+export async function addTeam(team: Team): Promise<{ error?: string }> {
+  const { error } = await supabase
     .from("teams")
     .insert({
-      id: team.id,
       number: team.number,
       name: team.name,
       notes: team.notes,
-      pre_comp: team.preComp ?? DEFAULT_SETTINGS,
-    })
-    .select()
-    .single();
+      pre_comp: team.preComp ?? {
+        predictedAuto: 5,
+        predictedTeleop: 5,
+        predictedEndgame: 5,
+        predictedReliability: 5,
+        performanceOpinion: "Average",
+        strongestSystem: "",
+        mayStruggleWith: "",
+        driveSystem: "swerve",
+        notes: "",
+        videoLinks: [],
+        preCompPhotos: [],
+      },
+    });
 
-  if (error || !data) return;
-
-  if (team.matches) {
-    for (const match of team.matches) {
-      await addMatchToTeam(team.id, match);
-    }
+  if (error) {
+    console.error("Add team error:", error.message, error.details, error.hint);
+    return { error: error.message };
   }
+
+  return {};
 }
 
 export async function updateTeam(updated: Team): Promise<void> {
@@ -165,7 +173,6 @@ export async function addMatchToTeam(teamId: string, match: MatchData): Promise<
   const { data, error } = await supabase
     .from("matches")
     .insert({
-      id: match.id,
       team_id: teamId,
       match_number: match.matchNumber,
       alliance: match.alliance,
@@ -194,7 +201,6 @@ export async function addMatchToTeam(teamId: string, match: MatchData): Promise<
   if (match.trialPhotos) {
     for (const photo of match.trialPhotos) {
       await supabase.from("trial_photos").insert({
-        id: photo.id,
         match_id: data.id,
         team_id: teamId,
         url: photo.url,

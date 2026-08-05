@@ -19,10 +19,6 @@ import { Team } from "@/lib/types";
 import { Plus, Search, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
 export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [search, setSearch] = useState("");
@@ -32,6 +28,7 @@ export default function TeamsPage() {
     name: "",
     notes: "",
   });
+  const [error, setError] = useState("");
 
   useEffect(() => {
     getTeams().then(setTeams);
@@ -45,9 +42,10 @@ export default function TeamsPage() {
 
   const handleAdd = async () => {
     if (!newTeam.number || !newTeam.name) return;
+    setError("");
 
     const team: Team = {
-      id: generateId(),
+      id: "",
       number: Number(newTeam.number),
       name: newTeam.name,
       notes: newTeam.notes,
@@ -68,7 +66,11 @@ export default function TeamsPage() {
       matches: [],
     };
 
-    await addTeam(team);
+    const result = await addTeam(team);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     const updated = await getTeams();
     setTeams(updated);
     setNewTeam({ number: "", name: "", notes: "" });
@@ -132,6 +134,7 @@ export default function TeamsPage() {
                   rows={3}
                 />
               </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <Button onClick={handleAdd} className="w-full">
                 Add Team
               </Button>
