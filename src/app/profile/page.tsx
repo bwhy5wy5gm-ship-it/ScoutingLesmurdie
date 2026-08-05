@@ -83,55 +83,55 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const result = reader.result as string;
       setProfilePicture(result);
-      updateAccount({ profilePicture: result });
-      refreshAccount();
+      await updateAccount({ profilePicture: result });
+      await refreshAccount();
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSaveProfile = () => {
-    updateAccount({ username, driveTeamRole, bio });
-    refreshAccount();
+  const handleSaveProfile = async () => {
+    await updateAccount({ username, driveTeamRole, bio });
+    await refreshAccount();
   };
 
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+  const handleThemeChange = async (newTheme: "light" | "dark" | "system") => {
     const updated = { ...localSettings, theme: newTheme };
     setLocalSettings(updated);
-    updateSettings({ theme: newTheme });
+    await updateSettings({ theme: newTheme });
     syncDocumentClasses(updated);
   };
 
-  const handleAccentChange = (color: AccentColor) => {
+  const handleAccentChange = async (color: AccentColor) => {
     const updated = { ...localSettings, accentColor: color };
     setLocalSettings(updated);
-    updateSettings({ accentColor: color });
+    await updateSettings({ accentColor: color });
     syncDocumentClasses(updated);
   };
 
-  const handleGlassModeChange = (checked: boolean) => {
+  const handleGlassModeChange = async (checked: boolean) => {
     const updated = { ...localSettings, glassMode: checked };
     setLocalSettings(updated);
-    updateSettings({ glassMode: checked });
+    await updateSettings({ glassMode: checked });
     syncDocumentClasses(updated);
   };
 
-  const handleTrueBlackChange = (checked: boolean) => {
+  const handleTrueBlackChange = async (checked: boolean) => {
     const updated = { ...localSettings, trueBlack: checked };
     setLocalSettings(updated);
-    updateSettings({ trueBlack: checked });
+    await updateSettings({ trueBlack: checked });
     syncDocumentClasses(updated);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/login");
   };
 
-  const handleDeleteAccount = () => {
-    const success = deleteAccount();
+  const handleDeleteAccount = async () => {
+    const success = await deleteAccount();
     if (success) {
       router.push("/login");
     }
@@ -191,10 +191,10 @@ export default function ProfilePage() {
                   variant="ghost"
                   size="sm"
                   className="text-destructive"
-                  onClick={() => {
+                  onClick={async () => {
                     setProfilePicture("");
-                    updateAccount({ profilePicture: "" });
-                    refreshAccount();
+                    await updateAccount({ profilePicture: "" });
+                    await refreshAccount();
                   }}
                 >
                   Remove
@@ -228,10 +228,10 @@ export default function ProfilePage() {
               />
               <Button
                 size="sm"
-                onClick={() => {
+                onClick={async () => {
                   if (username.trim()) {
-                    updateAccount({ username: username.trim() });
-                    refreshAccount();
+                    await updateAccount({ username: username.trim() });
+                    await refreshAccount();
                   }
                 }}
               >

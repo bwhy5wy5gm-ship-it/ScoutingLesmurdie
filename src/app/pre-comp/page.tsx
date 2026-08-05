@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -115,15 +115,16 @@ function Question({
 
 export default function PreCompPage() {
   const { account, settings } = useAuth();
-  const [teams, setTeams] = useState<Team[]>(() => {
-    if (typeof window === "undefined") return [];
-    return getTeams();
-  });
+  const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [photoType, setPhotoType] = useState<PreCompPhotoType>("unit-photo");
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    getTeams().then(setTeams);
+  }, []);
 
   const selectedTeam = useMemo(
     () => teams.find((t) => t.id === selectedTeamId) ?? null,
@@ -161,20 +162,22 @@ export default function PreCompPage() {
     });
   }, [selectedTeam]);
 
-  const updatePreComp = (field: string, value: number | string | PreCompPhoto[] | string[]) => {
+  const updatePreComp = async (field: string, value: number | string | PreCompPhoto[] | string[]) => {
     if (!selectedTeam) return;
     const updated = {
       ...selectedTeam,
       preComp: { ...selectedTeam.preComp, [field]: value },
     };
-    updateTeam(updated);
-    setTeams(getTeams());
+    await updateTeam(updated);
+    const refreshed = await getTeams();
+    setTeams(refreshed);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedTeam) return;
-    updateTeam(selectedTeam);
-    setTeams(getTeams());
+    await updateTeam(selectedTeam);
+    const refreshed = await getTeams();
+    setTeams(refreshed);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

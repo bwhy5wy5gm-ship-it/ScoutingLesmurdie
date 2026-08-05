@@ -25,7 +25,7 @@ export default function RegisterPage() {
     return null;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
@@ -51,7 +51,7 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    const result = register(username, password, securityQuestion, securityAnswer);
+    const result = await register(username, password, securityQuestion, securityAnswer);
     if (result.success) {
       router.push("/");
     } else {

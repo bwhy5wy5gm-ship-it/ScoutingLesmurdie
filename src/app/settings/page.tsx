@@ -16,9 +16,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/components/auth-provider";
 import {
-  getSettings,
-  saveSettings,
   exportData,
   importData,
   resetAllData,
@@ -55,56 +54,65 @@ function syncDocumentClasses(s: Settings) {
 
 export default function SettingsPage() {
   const { setTheme } = useTheme();
-  const [settings, setSettings] = useState<Settings>(() => {
-    if (typeof window === "undefined") {
-      return { ...DEFAULT_SETTINGS };
-    }
-    return getSettings();
-  });
+  const { settings: authSettings, updateSettings: authUpdateSettings } = useAuth();
+  const [settings, setSettings] = useState<Settings>({ ...DEFAULT_SETTINGS });
+  const [teamCount, setTeamCount] = useState(0);
   const [newEvent, setNewEvent] = useState("");
   const [importJson, setImportJson] = useState("");
+
+  useEffect(() => {
+    setSettings(authSettings);
+  }, [authSettings]);
+
+  useEffect(() => {
+    async function load() {
+      const t = await getTeams();
+      setTeamCount(t.length);
+    }
+    load();
+  }, []);
 
   useEffect(() => {
     syncDocumentClasses(settings);
   }, [settings]);
 
-  const handleSave = () => {
-    saveSettings(settings);
+  const handleSave = async () => {
+    await authUpdateSettings(settings);
     setTheme(settings.theme);
     syncDocumentClasses(settings);
   };
 
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+  const handleThemeChange = async (newTheme: "light" | "dark" | "system") => {
     const updated = { ...settings, theme: newTheme };
     setSettings(updated);
     setTheme(newTheme);
-    saveSettings(updated);
+    await authUpdateSettings(updated);
     syncDocumentClasses(updated);
   };
 
-  const handleAccentChange = (color: AccentColor) => {
+  const handleAccentChange = async (color: AccentColor) => {
     const updated = { ...settings, accentColor: color };
     setSettings(updated);
-    saveSettings(updated);
+    await authUpdateSettings(updated);
     syncDocumentClasses(updated);
   };
 
-  const handleGlassModeChange = (checked: boolean) => {
+  const handleGlassModeChange = async (checked: boolean) => {
     const updated = { ...settings, glassMode: checked };
     setSettings(updated);
-    saveSettings(updated);
+    await authUpdateSettings(updated);
     syncDocumentClasses(updated);
   };
 
-  const handleTrueBlackChange = (checked: boolean) => {
+  const handleTrueBlackChange = async (checked: boolean) => {
     const updated = { ...settings, trueBlack: checked };
     setSettings(updated);
-    saveSettings(updated);
+    await authUpdateSettings(updated);
     syncDocumentClasses(updated);
   };
 
-  const handleExport = () => {
-    const data = exportData();
+  const handleExport = async () => {
+    const data = await exportData();
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -114,11 +122,10 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!importJson) return;
-    const success = importData(importJson);
+    const success = await importData(importJson);
     if (success) {
-      setSettings(getSettings());
       setImportJson("");
       alert("Data imported successfully!");
     } else {
@@ -126,19 +133,21 @@ export default function SettingsPage() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (confirm("Are you sure? This will delete all local data.")) {
-      resetAllData();
+      await resetAllData();
       setSettings({ ...DEFAULT_SETTINGS });
     }
   };
 
-  const handleAddEvent = () => {
+  const handleAddEvent = async () => {
     if (!newEvent || settings.events.includes(newEvent)) return;
-    setSettings({
+    const updated = {
       ...settings,
       events: [...settings.events, newEvent],
-    });
+    };
+    setSettings(updated);
+    await authUpdateSettings(updated);
     setNewEvent("");
   };
 
@@ -317,7 +326,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <Button variant="outline" className="w-full" onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
-            Export Data ({getTeams().length} teams)
+            Export Data ({teamCount} teams)
           </Button>
 
           <div className="space-y-2">

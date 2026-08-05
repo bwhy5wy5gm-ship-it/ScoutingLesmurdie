@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,10 +24,7 @@ function generateId() {
 }
 
 export default function TeamsPage() {
-  const [teams, setTeams] = useState<Team[]>(() => {
-    if (typeof window === "undefined") return [];
-    return getTeams();
-  });
+  const [teams, setTeams] = useState<Team[]>([]);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTeam, setNewTeam] = useState({
@@ -36,13 +33,17 @@ export default function TeamsPage() {
     notes: "",
   });
 
+  useEffect(() => {
+    getTeams().then(setTeams);
+  }, []);
+
   const filtered = teams.filter(
     (t) =>
       t.number.toString().includes(search) ||
       t.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newTeam.number || !newTeam.name) return;
 
     const team: Team = {
@@ -67,15 +68,17 @@ export default function TeamsPage() {
       matches: [],
     };
 
-    addTeam(team);
-    setTeams(getTeams());
+    await addTeam(team);
+    const updated = await getTeams();
+    setTeams(updated);
     setNewTeam({ number: "", name: "", notes: "" });
     setDialogOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    deleteTeam(id);
-    setTeams(getTeams());
+  const handleDelete = async (id: string) => {
+    await deleteTeam(id);
+    const updated = await getTeams();
+    setTeams(updated);
   };
 
   return (

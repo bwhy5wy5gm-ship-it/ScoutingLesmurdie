@@ -8,72 +8,212 @@ import {
   SynergyLevel,
   AllianceSynergy,
   MatchPrediction,
+  PreCompData,
   DEFAULT_SETTINGS,
 } from "./types";
+import { supabase } from "./supabase-browser";
 
-const TEAMS_KEY = "frc-scout-teams";
-const SETTINGS_KEY = "frc-scout-settings";
+export async function getTeams(): Promise<Team[]> {
+  const { data: teamsData, error: teamsError } = await supabase
+    .from("teams")
+    .select("*")
+    .order("number", { ascending: true });
 
-function getFromStorage<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : fallback;
-  } catch {
-    return fallback;
+  if (teamsError || !teamsData) return [];
+
+  const teams: Team[] = [];
+
+  for (const t of teamsData) {
+    const { data: matchesData } = await supabase
+      .from("matches")
+      .select("*")
+      .eq("team_id", t.id)
+      .order("match_number", { ascending: true });
+
+    const { data: photosData } = await supabase
+      .from("photos")
+      .select("*")
+      .eq("team_id", t.id);
+
+    const { data: trialPhotosData } = await supabase
+      .from("trial_photos")
+      .select("*")
+      .eq("team_id", t.id);
+
+    const { data: precompPhotosData } = await supabase
+      .from("precomp_photos")
+      .select("*")
+      .eq("team_id", t.id);
+
+    const matches: MatchData[] = (matchesData ?? []).map((m) => ({
+      id: m.id,
+      matchNumber: m.match_number,
+      alliance: m.alliance as "red" | "blue",
+      autoScore: m.auto_score,
+      teleopScore: m.teleop_score,
+      endgameScore: m.endgame_score,
+      cycleEfficiency: m.cycle_efficiency,
+      reliabilityRating: m.reliability_rating,
+      performanceOpinion: m.performance_opinion as PerformanceOpinion,
+      biggestStrength: m.biggest_strength,
+      unitStruggledWith: m.unit_struggled_with,
+      allianceConsideration: m.alliance_consideration as "Yes" | "No" | "Maybe",
+      warpScore: m.warp_score,
+      conditionalMalfunctioned: m.conditional_malfunctioned,
+      conditionalAutoFailed: m.conditional_auto_failed,
+      conditionalEndgameAttempted: m.conditional_endgame_attempted,
+      driveSystem: m.drive_system as "swerve" | "tank" | "other",
+      trialPhotos: (trialPhotosData ?? [])
+        .filter((tp) => tp.match_id === m.id)
+        .map((tp) => ({
+          id: tp.id,
+          url: tp.url,
+          photoType: tp.photo_type as "trial-action" | "breakdown" | "auto-path" | "general",
+          uploadedBy: tp.uploaded_by,
+          uploadedAt: tp.uploaded_at,
+          trialId: tp.trial_id,
+          teamNumber: tp.team_number,
+        })),
+      scoutName: m.scout_name,
+      timestamp: m.timestamp,
+    }));
+
+    teams.push({
+      id: t.id,
+      number: t.number,
+      name: t.name,
+      notes: t.notes,
+      photos: (photosData ?? []).map((p) => ({
+        id: p.id,
+        url: p.url,
+        label: p.label,
+        photoType: p.photo_type as "robot" | "intake" | "shooter" | "auto-path",
+        teamNumber: p.team_number,
+        uploadedBy: p.uploaded_by,
+        uploadedAt: p.uploaded_at,
+      })),
+      preComp: {
+        ...(t.pre_comp as PreCompData),
+        preCompPhotos: (precompPhotosData ?? []).map((pp) => ({
+          id: pp.id,
+          url: pp.url,
+          photoType: pp.photo_type as "unit-photo" | "system-closeup" | "sensor-layout" | "auto-path",
+          teamNumber: pp.team_number,
+          uploadedBy: pp.uploaded_by,
+          uploadedAt: pp.uploaded_at,
+        })),
+      } as PreCompData,
+      matches,
+    });
+  }
+
+  return teams;
+}
+
+export async function saveTeams(): Promise<void> {
+  // Teams are saved individually via addTeam/updateTeam
+}
+
+export async function getTeam(id: string): Promise<Team | undefined> {
+  const teams = await getTeams();
+  return teams.find((t) => t.id === id);
+}
+
+export async function getTeamByNumber(number: number): Promise<Team | undefined> {
+  const teams = await getTeams();
+  return teams.find((t) => t.number === number);
+}
+
+export async function addTeam(team: Team): Promise<void> {
+  const { data, error } = await supabase
+    .from("teams")
+    .insert({
+      id: team.id,
+      number: team.number,
+      name: team.name,
+      notes: team.notes,
+      pre_comp: team.preComp ?? DEFAULT_SETTINGS,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return;
+
+  if (team.matches) {
+    for (const match of team.matches) {
+      await addMatchToTeam(team.id, match);
+    }
   }
 }
 
-function setToStorage<T>(key: string, value: T): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
+export async function updateTeam(updated: Team): Promise<void> {
+  await supabase
+    .from("teams")
+    .update({
+      name: updated.name,
+      notes: updated.notes,
+      pre_comp: updated.preComp,
+    })
+    .eq("id", updated.id);
 }
 
-export function getTeams(): Team[] {
-  return getFromStorage<Team[]>(TEAMS_KEY, []);
+export async function deleteTeam(id: string): Promise<void> {
+  await supabase.from("teams").delete().eq("id", id);
 }
 
-export function saveTeams(teams: Team[]): void {
-  setToStorage(TEAMS_KEY, teams);
+export async function addMatchToTeam(teamId: string, match: MatchData): Promise<void> {
+  const { data, error } = await supabase
+    .from("matches")
+    .insert({
+      id: match.id,
+      team_id: teamId,
+      match_number: match.matchNumber,
+      alliance: match.alliance,
+      auto_score: match.autoScore,
+      teleop_score: match.teleopScore,
+      endgame_score: match.endgameScore,
+      cycle_efficiency: match.cycleEfficiency,
+      reliability_rating: match.reliabilityRating,
+      performance_opinion: match.performanceOpinion,
+      biggest_strength: match.biggestStrength,
+      unit_struggled_with: match.unitStruggledWith,
+      alliance_consideration: match.allianceConsideration,
+      warp_score: match.warpScore,
+      conditional_malfunctioned: match.conditionalMalfunctioned,
+      conditional_auto_failed: match.conditionalAutoFailed,
+      conditional_endgame_attempted: match.conditionalEndgameAttempted,
+      drive_system: match.driveSystem,
+      scout_name: match.scoutName,
+      timestamp: match.timestamp,
+    })
+    .select()
+    .single();
+
+  if (error || !data) return;
+
+  if (match.trialPhotos) {
+    for (const photo of match.trialPhotos) {
+      await supabase.from("trial_photos").insert({
+        id: photo.id,
+        match_id: data.id,
+        team_id: teamId,
+        url: photo.url,
+        photo_type: photo.photoType,
+        uploaded_by: photo.uploadedBy,
+        uploaded_at: photo.uploadedAt,
+        trial_id: photo.trialId,
+        team_number: photo.teamNumber,
+      });
+    }
+  }
 }
 
-export function getTeam(id: string): Team | undefined {
-  return getTeams().find((t) => t.id === id);
+export async function getSettings(): Promise<Settings> {
+  return DEFAULT_SETTINGS;
 }
 
-export function getTeamByNumber(number: number): Team | undefined {
-  return getTeams().find((t) => t.number === number);
-}
-
-export function addTeam(team: Team): void {
-  const teams = getTeams();
-  teams.push(team);
-  saveTeams(teams);
-}
-
-export function updateTeam(updated: Team): void {
-  const teams = getTeams().map((t) => (t.id === updated.id ? updated : t));
-  saveTeams(teams);
-}
-
-export function deleteTeam(id: string): void {
-  const teams = getTeams().filter((t) => t.id !== id);
-  saveTeams(teams);
-}
-
-export function addMatchToTeam(teamId: string, match: MatchData): void {
-  const team = getTeam(teamId);
-  if (!team) return;
-  team.matches = [...(team.matches ?? []), match];
-  updateTeam(team);
-}
-
-export function getSettings(): Settings {
-  return getFromStorage<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS);
-}
-
-export function saveSettings(settings: Settings): void {
-  setToStorage(SETTINGS_KEY, settings);
+export async function saveSettings(): Promise<void> {
+  // Settings are now per-account in profiles table
 }
 
 function opinionToScore(opinion: PerformanceOpinion): number {
@@ -156,7 +296,6 @@ export function calculateTeamStats(team: Team) {
   };
 }
 
-// ── Role Recommendation Engine ──
 export function recommendRole(stats: {
   avgAuto: number;
   avgTeleop: number;
@@ -174,7 +313,6 @@ export function recommendRole(stats: {
   return "Defense";
 }
 
-// ── Stability Index ──
 export function calculateStability(team: Team): StabilityIndex {
   const matches = team.matches ?? [];
   if (matches.length < 2) return "Semi-Stable";
@@ -192,9 +330,18 @@ export function calculateStability(team: Team): StabilityIndex {
   return "Stable";
 }
 
-// ── Alliance Synergy Score ──
 export function calculateAllianceSynergy(teamNumbers: number[]): AllianceSynergy {
-  const teams = teamNumbers.map((n) => getTeamByNumber(n)).filter(Boolean) as Team[];
+  if (teamNumbers.length < 2) {
+    return { teamNumbers, score: 0, level: "Low", autoSynergy: 0, teleopSynergy: 0, endgameSynergy: 0, driveCompatibility: false };
+  }
+
+  // For sync functions, we need to compute from already-loaded teams
+  // These functions should be called after teams are loaded
+  return { teamNumbers, score: 0, level: "Low", autoSynergy: 0, teleopSynergy: 0, endgameSynergy: 0, driveCompatibility: false };
+}
+
+export function calculateAllianceSynergyFromTeams(teams: Team[]): AllianceSynergy {
+  const teamNumbers = teams.map((t) => t.number);
   if (teams.length < 2) {
     return { teamNumbers, score: 0, level: "Low", autoSynergy: 0, teleopSynergy: 0, endgameSynergy: 0, driveCompatibility: false };
   }
@@ -222,20 +369,18 @@ export function calculateAllianceSynergy(teamNumbers: number[]): AllianceSynergy
   return { teamNumbers, score, level, autoSynergy, teleopSynergy, endgameSynergy, driveCompatibility };
 }
 
-// ── Match Outcome Predictor ──
 export function predictMatchOutcome(
-  alliance1Numbers: number[],
-  alliance2Numbers: number[]
+  alliance1Teams: Team[],
+  alliance2Teams: Team[]
 ): MatchPrediction {
-  const getAvgWarp = (nums: number[]) => {
-    const teams = nums.map((n) => getTeamByNumber(n)).filter(Boolean) as Team[];
+  const getAvgWarp = (teams: Team[]) => {
     if (teams.length === 0) return 5;
     const stats = teams.map((t) => calculateTeamStats(t));
     return stats.reduce((a, s) => a + s.avgWarpScore, 0) / stats.length;
   };
 
-  const warp1 = getAvgWarp(alliance1Numbers);
-  const warp2 = getAvgWarp(alliance2Numbers);
+  const warp1 = getAvgWarp(alliance1Teams);
+  const warp2 = getAvgWarp(alliance2Teams);
   const total = warp1 + warp2 || 1;
 
   const alliance1WinPct = Math.round((warp1 / total) * 100);
@@ -255,8 +400,8 @@ export function predictMatchOutcome(
   if (warp2 < 4) weaknesses.push("Alliance 2 has low overall ratings");
 
   return {
-    alliance1: { teamNumbers: alliance1Numbers, warpScore: Math.round(warp1 * 10) / 10 },
-    alliance2: { teamNumbers: alliance2Numbers, warpScore: Math.round(warp2 * 10) / 10 },
+    alliance1: { teamNumbers: alliance1Teams.map((t) => t.number), warpScore: Math.round(warp1 * 10) / 10 },
+    alliance2: { teamNumbers: alliance2Teams.map((t) => t.number), warpScore: Math.round(warp2 * 10) / 10 },
     alliance1WinPct,
     alliance2WinPct,
     predictedScoreRange,
@@ -265,7 +410,6 @@ export function predictMatchOutcome(
   };
 }
 
-// ── Heat Map Data ──
 export interface HeatMapEntry {
   teamNumber: number;
   teamName: string;
@@ -274,8 +418,7 @@ export interface HeatMapEntry {
   reliabilityDelta: number;
 }
 
-export function getHeatMapData(): HeatMapEntry[] {
-  const teams = getTeams();
+export function getHeatMapData(teams: Team[]): HeatMapEntry[] {
   return teams
     .filter((t) => (t.matches ?? []).length >= 2)
     .map((team) => {
@@ -298,7 +441,6 @@ export function getHeatMapData(): HeatMapEntry[] {
     });
 }
 
-// ── Reliability Alert ──
 export function hasReliabilityDrop(team: Team): { alert: boolean; message: string } {
   const matches = team.matches ?? [];
   if (matches.length < 3) return { alert: false, message: "" };
@@ -313,9 +455,7 @@ export function hasReliabilityDrop(team: Team): { alert: boolean; message: strin
   return { alert: false, message: "" };
 }
 
-// ── Recommended Alliances ──
-export function getRecommendedAlliances(): AllianceSynergy[] {
-  const teams = getTeams();
+export async function getRecommendedAlliances(teams: Team[]): Promise<AllianceSynergy[]> {
   if (teams.length < 3) return [];
   const topTeams = teams
     .map((t) => ({ team: t, stats: calculateTeamStats(t) }))
@@ -326,10 +466,10 @@ export function getRecommendedAlliances(): AllianceSynergy[] {
   for (let i = 0; i < topTeams.length && combos.length < 5; i++) {
     for (let j = i + 1; j < topTeams.length && combos.length < 5; j++) {
       for (let k = j + 1; k < topTeams.length && combos.length < 5; k++) {
-        const synergy = calculateAllianceSynergy([
-          topTeams[i].team.number,
-          topTeams[j].team.number,
-          topTeams[k].team.number,
+        const synergy = calculateAllianceSynergyFromTeams([
+          topTeams[i].team,
+          topTeams[j].team,
+          topTeams[k].team,
         ]);
         if (synergy.level === "High") combos.push(synergy);
       }
@@ -338,7 +478,7 @@ export function getRecommendedAlliances(): AllianceSynergy[] {
   if (combos.length === 0 && topTeams.length >= 2) {
     for (let i = 0; i < Math.min(topTeams.length, 5); i++) {
       for (let j = i + 1; j < Math.min(topTeams.length, 5); j++) {
-        const synergy = calculateAllianceSynergy([topTeams[i].team.number, topTeams[j].team.number]);
+        const synergy = calculateAllianceSynergyFromTeams([topTeams[i].team, topTeams[j].team]);
         if (synergy.level !== "Low") combos.push(synergy);
       }
     }
@@ -346,70 +486,64 @@ export function getRecommendedAlliances(): AllianceSynergy[] {
   return combos.slice(0, 5);
 }
 
-// ── Scout Accuracy ──
-export function getScoutAccuracy(scoutName: string): { total: number; consistency: number } {
-  const teams = getTeams();
-  const allMatches: { scoutName: string; warpScore: number }[] = [];
-  for (const team of teams) {
-    for (const m of team.matches ?? []) {
-      allMatches.push({ scoutName: m.scoutName, warpScore: m.warpScore });
-    }
-  }
-  const scoutMatches = allMatches.filter((m) => m.scoutName === scoutName);
-  if (scoutMatches.length === 0) return { total: 0, consistency: 0 };
-  const avg = scoutMatches.reduce((a, b) => a + b.warpScore, 0) / scoutMatches.length;
+export async function getScoutAccuracy(scoutName: string): Promise<{ total: number; consistency: number }> {
+  const { data: matches } = await supabase
+    .from("matches")
+    .select("warp_score")
+    .eq("scout_name", scoutName);
+
+  if (!matches || matches.length === 0) return { total: 0, consistency: 0 };
+
+  const avg = matches.reduce((a, b) => a + b.warp_score, 0) / matches.length;
   const variance =
-    scoutMatches.reduce((a, b) => a + Math.pow(b.warpScore - avg, 2), 0) /
-    scoutMatches.length;
+    matches.reduce((a, b) => a + Math.pow(b.warp_score - avg, 2), 0) /
+    matches.length;
   const consistency = Math.max(0, 100 - Math.round(Math.sqrt(variance) * 10));
-  return { total: scoutMatches.length, consistency };
+  return { total: matches.length, consistency };
 }
 
-// ── Smart Photo Label Suggestion ──
 export function suggestPhotoLabel(trialPhotos: { photoType: string }[]): string {
   const counts: Record<string, number> = {};
   for (const p of trialPhotos) {
     counts[p.photoType] = (counts[p.photoType] || 0) + 1;
   }
-  const order: TrialPhotoType[] = ["trial-action", "auto-path", "breakdown", "general"];
+  const order: string[] = ["trial-action", "auto-path", "breakdown", "general"];
   for (const t of order) {
     if (!counts[t]) return t;
   }
   return "general";
 }
 
-type TrialPhotoType = "trial-action" | "breakdown" | "auto-path" | "general";
-
-export function replaceScoutName(oldName: string, newName: string): void {
-  const teams = getTeams();
-  for (const team of teams) {
-    if (team.matches) {
-      for (const match of team.matches) {
-        if (match.scoutName === oldName) {
-          match.scoutName = newName;
-        }
-      }
-    }
-  }
-  saveTeams(teams);
+export async function replaceScoutName(oldName: string, newName: string): Promise<void> {
+  await supabase
+    .from("matches")
+    .update({ scout_name: newName })
+    .eq("scout_name", oldName);
 }
 
-export function exportData(): string {
-  return JSON.stringify({ teams: getTeams(), settings: getSettings() }, null, 2);
+export async function exportData(): Promise<string> {
+  const teams = await getTeams();
+  return JSON.stringify({ teams }, null, 2);
 }
 
-export function importData(json: string): boolean {
+export async function importData(json: string): Promise<boolean> {
   try {
     const data = JSON.parse(json);
-    if (data.teams) saveTeams(data.teams);
-    if (data.settings) saveSettings(data.settings);
+    if (data.teams) {
+      for (const team of data.teams) {
+        await addTeam(team);
+      }
+    }
     return true;
   } catch {
     return false;
   }
 }
 
-export function resetAllData(): void {
-  localStorage.removeItem(TEAMS_KEY);
-  localStorage.removeItem(SETTINGS_KEY);
+export async function resetAllData(): Promise<void> {
+  await supabase.from("trial_photos").delete().neq("id", "");
+  await supabase.from("matches").delete().neq("id", "");
+  await supabase.from("photos").delete().neq("id", "");
+  await supabase.from("precomp_photos").delete().neq("id", "");
+  await supabase.from("teams").delete().neq("id", "");
 }

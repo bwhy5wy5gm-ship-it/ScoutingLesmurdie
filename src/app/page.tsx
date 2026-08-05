@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getTeams, getSettings, calculateTeamStats } from "@/lib/store";
-import { Team, MatchData } from "@/lib/types";
+import { Team, Settings, MatchData, DEFAULT_SETTINGS } from "@/lib/types";
 import {
   Users,
   Trophy,
@@ -17,15 +17,18 @@ import {
 import Link from "next/link";
 
 export default function HomePage() {
-  const [teams] = useState<Team[]>(() => {
-    if (typeof window === "undefined") return [];
-    return getTeams() ?? [];
-  });
-  const [settings] = useState(() => {
-    if (typeof window === "undefined")
-      return { currentEvent: "Local Event", scoutName: "Scout" };
-    return getSettings();
-  });
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    async function load() {
+      const t = await getTeams();
+      setTeams(t);
+      const s = await getSettings();
+      setSettings(s);
+    }
+    load();
+  }, []);
 
   const totalMatches = teams.reduce(
     (sum, t) => sum + (t.matches ?? []).length,

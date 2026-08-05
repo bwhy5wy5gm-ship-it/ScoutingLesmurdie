@@ -1,13 +1,9 @@
 import { Settings, DEFAULT_SETTINGS } from "./types";
-import { getTeams, replaceScoutName } from "./store";
-
-const ACCOUNTS_KEY = "frc-scout-accounts";
-const SESSION_KEY = "frc-scout-session";
+import { supabase } from "./supabase-browser";
 
 export interface Account {
   id: string;
   username: string;
-  passwordHash: string;
   profilePicture: string;
   driveTeamRole: string;
   bio: string;
@@ -23,218 +19,301 @@ export interface Session {
   loginAt: string;
 }
 
-function getFromStorage<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : fallback;
-  } catch {
-    return fallback;
-  }
+function usernameToEmail(username: string): string {
+  return `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}@warpscout.app`;
 }
 
-function setToStorage<T>(key: string, value: T): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function hashPassword(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return "h_" + Math.abs(hash).toString(36) + "_" + password.length;
-}
-
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-export function getAccounts(): Account[] {
-  return getFromStorage<Account[]>(ACCOUNTS_KEY, []);
-}
-
-function saveAccounts(accounts: Account[]): void {
-  setToStorage(ACCOUNTS_KEY, accounts);
-}
-
-export function getCurrentSession(): Session | null {
-  return getFromStorage<Session | null>(SESSION_KEY, null);
-}
-
-export function getCurrentAccount(): Account | null {
-  const session = getCurrentSession();
+export async function getCurrentSession(): Promise<Session | null> {
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session) return null;
-  return getAccounts().find((a) => a.id === session.accountId) ?? null;
+  return {
+    accountId: session.user.id,
+    username: session.user.user_metadata?.username ?? "",
+    loginAt: session.user.created_at,
+  };
 }
 
-export function isLoggedIn(): boolean {
-  return getCurrentSession() !== null;
+export async function getCurrentAccount(): Promise<Account | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", session.user.id)
+    .single();
+
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    username: data.username,
+    profilePicture: data.profile_picture ?? "",
+    driveTeamRole: data.drive_team_role ?? "",
+    bio: data.bio ?? "",
+    securityQuestion: data.security_question ?? "",
+    securityAnswer: data.security_answer ?? "",
+    createdAt: data.created_at,
+    settings: data.settings ?? DEFAULT_SETTINGS,
+  };
 }
 
-export function createAccount(
+export async function isLoggedIn(): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session !== null;
+}
+
+export async function createAccount(
   username: string,
   password: string,
   securityQuestion: string,
   securityAnswer: string
-): { success: boolean; error?: string } {
-  const accounts = getAccounts();
-  if (accounts.some((a) => a.username.toLowerCase() === username.toLowerCase())) {
-    return { success: false, error: "Username already exists" };
-  }
+): Promise<{ success: boolean; error?: string }> {
   if (username.length < 2) return { success: false, error: "Username must be at least 2 characters" };
   if (password.length < 4) return { success: false, error: "Password must be at least 4 characters" };
   if (!securityQuestion.trim()) return { success: false, error: "Security question is required" };
   if (!securityAnswer.trim()) return { success: false, error: "Security answer is required" };
 
-  const account: Account = {
-    id: generateId(),
-    username,
-    passwordHash: hashPassword(password),
-    profilePicture: "",
-    driveTeamRole: "",
-    bio: "",
-    securityQuestion: securityQuestion.trim(),
-    securityAnswer: securityAnswer.trim().toLowerCase(),
-    createdAt: new Date().toISOString(),
-    settings: { ...DEFAULT_SETTINGS, scoutName: username },
-  };
+  const email = usernameToEmail(username);
 
-  accounts.push(account);
-  saveAccounts(accounts);
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .single();
 
-  const session: Session = { accountId: account.id, username, loginAt: new Date().toISOString() };
-  setToStorage(SESSION_KEY, session);
-
-  return { success: true };
-}
-
-export function login(username: string, password: string): { success: boolean; error?: string } {
-  const accounts = getAccounts();
-  const account = accounts.find((a) => a.username.toLowerCase() === username.toLowerCase());
-  if (!account) return { success: false, error: "Account not found" };
-  if (account.passwordHash !== hashPassword(password)) return { success: false, error: "Incorrect password" };
-
-  const session: Session = { accountId: account.id, username: account.username, loginAt: new Date().toISOString() };
-  setToStorage(SESSION_KEY, session);
-  return { success: true };
-}
-
-export function logout(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(SESSION_KEY);
-}
-
-export function updateAccount(updates: Partial<Omit<Account, "id" | "createdAt">>): boolean {
-  const session = getCurrentSession();
-  if (!session) return false;
-  const accounts = getAccounts();
-  const idx = accounts.findIndex((a) => a.id === session.accountId);
-  if (idx === -1) return false;
-  accounts[idx] = { ...accounts[idx], ...updates };
-  saveAccounts(accounts);
-  if (updates.username) {
-    session.username = updates.username;
-    setToStorage(SESSION_KEY, session);
+  if (existingProfile) {
+    return { success: false, error: "Username already exists" };
   }
-  return true;
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { username },
+    },
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  if (data.user) {
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: data.user.id,
+        username,
+        profile_picture: "",
+        drive_team_role: "",
+        bio: "",
+        security_question: securityQuestion.trim(),
+        security_answer: securityAnswer.trim().toLowerCase(),
+        settings: { ...DEFAULT_SETTINGS, scoutName: username },
+      });
+
+    if (profileError) {
+      return { success: false, error: "Failed to create profile" };
+    }
+  }
+
+  return { success: true };
 }
 
-export function updateAccountSettings(settings: Partial<Settings>): boolean {
-  const account = getCurrentAccount();
+export async function login(
+  username: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  const email = usernameToEmail(username);
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return { success: false, error: `${error.message} (email: ${email})` };
+  }
+
+  return { success: true };
+}
+
+export async function logout(): Promise<void> {
+  await supabase.auth.signOut();
+}
+
+export async function updateAccount(
+  updates: Partial<Omit<Account, "id" | "createdAt">>
+): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+
+  const dbUpdates: Record<string, unknown> = {};
+  if (updates.username !== undefined) dbUpdates.username = updates.username;
+  if (updates.profilePicture !== undefined) dbUpdates.profile_picture = updates.profilePicture;
+  if (updates.driveTeamRole !== undefined) dbUpdates.drive_team_role = updates.driveTeamRole;
+  if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
+  if (updates.settings !== undefined) dbUpdates.settings = updates.settings;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update(dbUpdates)
+    .eq("id", session.user.id);
+
+  return !error;
+}
+
+export async function updateAccountSettings(
+  settings: Partial<Settings>
+): Promise<boolean> {
+  const account = await getCurrentAccount();
   if (!account) return false;
   return updateAccount({ settings: { ...account.settings, ...settings } });
 }
 
-export function getAccountSettings(): Settings {
-  const account = getCurrentAccount();
+export async function getAccountSettings(): Promise<Settings> {
+  const account = await getCurrentAccount();
   return account?.settings ?? DEFAULT_SETTINGS;
 }
 
-export function deleteAccount(): boolean {
-  const session = getCurrentSession();
+export async function deleteAccount(): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session) return false;
-  const accounts = getAccounts();
-  const account = accounts.find((a) => a.id === session.accountId);
+
+  const account = await getCurrentAccount();
   if (!account) return false;
 
-  replaceDeletedUser(account.username);
-  const updated = accounts.filter((a) => a.id !== session.accountId);
-  saveAccounts(updated);
-  localStorage.removeItem(SESSION_KEY);
+  await replaceDeletedUser(account.username);
+
+  await supabase.from("profiles").delete().eq("id", session.user.id);
+
+  await supabase.auth.admin.deleteUser(session.user.id);
+
   return true;
 }
 
-function replaceDeletedUser(username: string): void {
-  replaceScoutName(username, "Deleted User");
+async function replaceDeletedUser(username: string): Promise<void> {
+  const { data: teams } = await supabase.from("teams").select("id");
+  if (!teams) return;
+
+  for (const team of teams) {
+    const { data: matches } = await supabase
+      .from("matches")
+      .select("id, scout_name")
+      .eq("team_id", team.id)
+      .eq("scout_name", username);
+
+    if (matches) {
+      for (const match of matches) {
+        await supabase
+          .from("matches")
+          .update({ scout_name: "Deleted User" })
+          .eq("id", match.id);
+      }
+    }
+  }
 }
 
-export function getSecurityQuestion(username: string): { success: boolean; question?: string; error?: string } {
-  const accounts = getAccounts();
-  const account = accounts.find((a) => a.username.toLowerCase() === username.toLowerCase());
-  if (!account) return { success: false, error: "Account not found" };
-  return { success: true, question: account.securityQuestion };
+export async function getSecurityQuestion(
+  username: string
+): Promise<{ success: boolean; question?: string; error?: string }> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("security_question")
+    .eq("username", username)
+    .single();
+
+  if (!data) return { success: false, error: "Account not found" };
+  return { success: true, question: data.security_question };
 }
 
-export function resetPassword(username: string, securityAnswer: string, newPassword: string): { success: boolean; error?: string } {
-  const accounts = getAccounts();
-  const idx = accounts.findIndex((a) => a.username.toLowerCase() === username.toLowerCase());
-  if (idx === -1) return { success: false, error: "Account not found" };
-  if (accounts[idx].securityAnswer !== securityAnswer.trim().toLowerCase()) {
+export async function resetPassword(
+  username: string,
+  securityAnswer: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, security_answer")
+    .eq("username", username)
+    .single();
+
+  if (!profile) return { success: false, error: "Account not found" };
+  if (profile.security_answer !== securityAnswer.trim().toLowerCase()) {
     return { success: false, error: "Incorrect answer" };
   }
-  if (newPassword.length < 4) return { success: false, error: "Password must be at least 4 characters" };
-  accounts[idx].passwordHash = hashPassword(newPassword);
-  saveAccounts(accounts);
+  if (newPassword.length < 4) {
+    return { success: false, error: "Password must be at least 4 characters" };
+  }
+
+  const { error } = await supabase.auth.admin.updateUserById(
+    profile.id,
+    { password: newPassword }
+  );
+
+  if (error) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user.id === profile.id) {
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) return { success: false, error: updateError.message };
+    } else {
+      return { success: false, error: "Cannot reset password for other users" };
+    }
+  }
+
   return { success: true };
 }
 
-export function getAllScoutStats(): {
+export async function getAllScoutStats(): Promise<{
   username: string;
   accountId: string;
   teamsScouted: number;
   formsCompleted: number;
   accuracy: number;
   consistency: number;
-}[] {
-  const accounts = getAccounts();
-  const teams = getTeams();
+}[]> {
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, username");
 
-  return accounts.map((account) => {
-    let formsCompleted = 0;
-    const teamNumbers = new Set<number>();
+  if (!profiles) return [];
 
-    for (const team of teams) {
-      for (const match of team.matches ?? []) {
-        if (match.scoutName === account.username) {
-          formsCompleted++;
-          teamNumbers.add(team.number);
-        }
-      }
-    }
+  const stats: {
+    username: string;
+    accountId: string;
+    teamsScouted: number;
+    formsCompleted: number;
+    accuracy: number;
+    consistency: number;
+  }[] = [];
 
-    const scoutMatches = (teams.flatMap((t: { matches: Array<{ scoutName: string; warpScore: number }> }) => t.matches ?? [])).filter(
-      (m: { scoutName: string }) => m.scoutName === account.username
-    );
+  for (const profile of profiles) {
+    const { data: matches } = await supabase
+      .from("matches")
+      .select("team_id, warp_score")
+      .eq("scout_name", profile.username);
+
+    const formsCompleted = matches?.length ?? 0;
+    const teamNumbers = new Set(matches?.map((m) => m.team_id));
 
     let accuracy = 50;
     let consistency = 50;
-    if (scoutMatches.length > 0) {
-      const avg = scoutMatches.reduce((a: number, m: { warpScore: number }) => a + m.warpScore, 0) / scoutMatches.length;
-      const variance = scoutMatches.reduce((a: number, m: { warpScore: number }) => a + Math.pow(m.warpScore - avg, 2), 0) / scoutMatches.length;
+    if (matches && matches.length > 0) {
+      const avg = matches.reduce((a, m) => a + m.warp_score, 0) / matches.length;
+      const variance = matches.reduce((a, m) => a + Math.pow(m.warp_score - avg, 2), 0) / matches.length;
       consistency = Math.max(0, 100 - Math.round(Math.sqrt(variance) * 10));
-      accuracy = Math.min(100, 50 + Math.round(scoutMatches.length * 3));
+      accuracy = Math.min(100, 50 + Math.round(matches.length * 3));
     }
 
-    return {
-      username: account.username,
-      accountId: account.id,
+    stats.push({
+      username: profile.username,
+      accountId: profile.id,
       teamsScouted: teamNumbers.size,
       formsCompleted,
       accuracy,
       consistency,
-    };
-  });
+    });
+  }
+
+  return stats;
 }

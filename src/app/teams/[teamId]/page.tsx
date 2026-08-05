@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +36,7 @@ import {
   PHOTO_TYPE_LABELS,
   TrialPhoto,
 } from "@/lib/types";
+import { DEFAULT_SETTINGS } from "@/lib/types";
 import {
   ArrowLeft,
   Save,
@@ -60,17 +61,24 @@ export default function TeamProfilePage() {
   const router = useRouter();
   const teamId = params.teamId as string;
   const [refreshKey, setRefreshKey] = useState(0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const team = useMemo(() => getTeam(teamId) ?? null, [teamId, refreshKey]);
-  const [notes, setNotes] = useState(() => team?.notes ?? "");
+  const [team, setTeam] = useState<import("@/lib/types").Team | null>(null);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [notes, setNotes] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoType, setPhotoType] = useState<PhotoType>("robot");
   const [filterType, setFilterType] = useState<PhotoType | "all">("all");
   const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
-  const [settings] = useState(() => {
-    if (typeof window === "undefined") return { scoutName: "Scout" };
-    return getSettings();
-  });
+
+  useEffect(() => {
+    async function load() {
+      const t = await getTeam(teamId);
+      setTeam(t ?? null);
+      if (t) setNotes(t.notes ?? "");
+      const s = await getSettings();
+      setSettings(s);
+    }
+    load();
+  }, [teamId, refreshKey]);
 
   if (!team) {
     return (
@@ -140,11 +148,11 @@ export default function TeamProfilePage() {
 
   const suggestedPhotoType = suggestPhotoLabel(allTrialPhotos);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const currentTeam = getTeam(params.teamId as string);
+    const currentTeam = await getTeam(params.teamId as string);
     if (!currentTeam) return;
 
     Array.from(files).forEach((file) => {
@@ -172,21 +180,21 @@ export default function TeamProfilePage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDeletePhoto = (photoId: string) => {
-    const currentTeam = getTeam(params.teamId as string);
+  const handleDeletePhoto = async (photoId: string) => {
+    const currentTeam = await getTeam(params.teamId as string);
     if (!currentTeam) return;
     const updated = {
       ...currentTeam,
       photos: (currentTeam.photos ?? []).filter((p) => p.id !== photoId),
     };
-    updateTeam(updated);
+    await updateTeam(updated);
     setRefreshKey((k) => k + 1);
     if (previewPhoto?.id === photoId) setPreviewPhoto(null);
   };
 
-  const handleSaveNotes = () => {
+  const handleSaveNotes = async () => {
     const updated = { ...team, notes };
-    updateTeam(updated);
+    await updateTeam(updated);
     setRefreshKey((k) => k + 1);
   };
 

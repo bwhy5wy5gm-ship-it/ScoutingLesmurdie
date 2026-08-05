@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { getAllScoutStats } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Users, Target, BarChart3 } from "lucide-react";
 
 type SortKey = "formsCompleted" | "accuracy" | "consistency";
+
+interface ScoutStat {
+  username: string;
+  accountId: string;
+  teamsScouted: number;
+  formsCompleted: number;
+  accuracy: number;
+  consistency: number;
+}
 
 function getXpLevel(forms: number): string {
   if (forms >= 50) return "Master Scout";
@@ -40,8 +49,11 @@ const sortOptions: { key: SortKey; label: string }[] = [
 
 export default function ScoutLeaderboardPage() {
   const [sortKey, setSortKey] = useState<SortKey>("formsCompleted");
+  const [stats, setStats] = useState<ScoutStat[]>([]);
 
-  const stats = useMemo(() => getAllScoutStats(), []);
+  useEffect(() => {
+    getAllScoutStats().then(setStats);
+  }, []);
 
   const sorted = useMemo(() => {
     return [...stats].sort((a, b) => b[sortKey] - a[sortKey]);
@@ -58,109 +70,85 @@ export default function ScoutLeaderboardPage() {
       : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-3xl font-bold">Scout Leaderboard</h1>
-        <p className="text-muted-foreground">
-          Rankings for all scouts based on their scouting activity
-        </p>
+        <p className="text-muted-foreground">Track scout performance and XP levels</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Scouts
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalScouts}</div>
+          <CardContent className="pt-6 text-center">
+            <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-2xl font-bold">{totalScouts}</p>
+            <p className="text-xs text-muted-foreground">Total Scouts</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg Accuracy
-            </CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgAccuracy}%</div>
+          <CardContent className="pt-6 text-center">
+            <Target className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-2xl font-bold">{avgAccuracy}%</p>
+            <p className="text-xs text-muted-foreground">Avg Accuracy</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Avg Consistency
-            </CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{avgConsistency}%</div>
+          <CardContent className="pt-6 text-center">
+            <BarChart3 className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-2xl font-bold">{avgConsistency}%</p>
+            <p className="text-xs text-muted-foreground">Avg Consistency</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>Rankings</CardTitle>
-            <div className="flex gap-2">
-              {sortOptions.map((opt) => (
-                <Button
-                  key={opt.key}
-                  variant={sortKey === opt.key ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSortKey(opt.key)}
-                >
-                  {opt.label}
-                </Button>
-              ))}
-            </div>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Rankings</CardTitle>
+          <div className="flex gap-2">
+            {sortOptions.map((opt) => (
+              <Button
+                key={opt.key}
+                variant={sortKey === opt.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortKey(opt.key)}
+              >
+                {opt.label}
+              </Button>
+            ))}
           </div>
         </CardHeader>
-        <CardContent>
-          {sorted.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">
-              No scouts have submitted any forms yet.
+        <CardContent className="space-y-3">
+          {sorted.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No scouts found
             </p>
-          ) : (
-            <div className="space-y-2">
-              {sorted.map((scout, i) => (
-                <div
-                  key={scout.accountId}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Badge className={`w-8 justify-center ${getRankBadgeColor(i)}`}>
-                      {i + 1}
-                    </Badge>
-                    <div>
-                      <div className="font-medium">{scout.username}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {scout.teamsScouted} teams scouted
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline" className={getXpLevelBadgeColor(scout.formsCompleted)}>
-                      {getXpLevel(scout.formsCompleted)}
-                    </Badge>
-                    <div className="text-right text-sm">
-                      <div>{scout.formsCompleted} forms</div>
-                    </div>
-                    <div className="text-right text-sm">
-                      <div>{scout.accuracy}% acc</div>
-                    </div>
-                    <div className="text-right text-sm">
-                      <div>{scout.consistency}% cons</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           )}
+          {sorted.map((scout, idx) => (
+            <div
+              key={scout.accountId}
+              className="flex items-center justify-between p-3 rounded-lg border"
+            >
+              <div className="flex items-center gap-3">
+                <Badge className={getRankBadgeColor(idx)}>
+                  #{idx + 1}
+                </Badge>
+                <div>
+                  <p className="text-sm font-medium">{scout.username}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {scout.teamsScouted} teams scouted
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge className={getXpLevelBadgeColor(scout.formsCompleted)}>
+                  {getXpLevel(scout.formsCompleted)}
+                </Badge>
+                <div className="text-right text-xs text-muted-foreground">
+                  <p>{scout.formsCompleted} forms</p>
+                  <p>{scout.accuracy}% acc</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
     </div>

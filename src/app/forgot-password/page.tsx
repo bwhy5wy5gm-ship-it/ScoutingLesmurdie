@@ -22,12 +22,12 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleUsernameSubmit(e: React.FormEvent) {
+  async function handleUsernameSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const result = getSecurityQuestion(username);
+    const result = await getSecurityQuestion(username);
     if (result.success && result.question) {
       setSecurityQuestion(result.question);
       setStep("answer");
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
     setStep("reset");
   }
 
-  function handleResetSubmit(e: React.FormEvent) {
+  async function handleResetSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
     }
 
     setLoading(true);
-    const result = resetPassword(username, securityAnswer, newPassword);
+    const result = await resetPassword(username, securityAnswer, newPassword);
     if (result.success) {
       setStep("done");
     } else {

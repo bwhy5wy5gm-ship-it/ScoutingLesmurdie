@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import {
 import {
   getTeams,
   calculateTeamStats,
-  calculateAllianceSynergy,
+  calculateAllianceSynergyFromTeams,
   predictMatchOutcome,
 } from "@/lib/store";
 import { Team, TeamStats, AllianceSynergy, MatchPrediction } from "@/lib/types";
@@ -224,7 +224,11 @@ function TeamMultiSelect({
 }
 
 export default function ComparePage() {
-  const [teams] = useState<Team[]>(() => getTeams());
+  const [teams, setTeams] = useState<Team[]>([]);
+
+  useEffect(() => {
+    getTeams().then(setTeams);
+  }, []);
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
   const [searchA, setSearchA] = useState("");
@@ -318,23 +322,23 @@ export default function ComparePage() {
 
   // Alliance Synergy
   const synergyResult = useMemo((): AllianceSynergy | null => {
-    const numbers = synergySelected
-      .map((id) => teams.find((t) => t.id === id)?.number)
-      .filter((n): n is number => n !== undefined);
-    if (numbers.length < 2) return null;
-    return calculateAllianceSynergy(numbers);
+    const selectedTeams = synergySelected
+      .map((id) => teams.find((t) => t.id === id))
+      .filter((t): t is Team => t !== undefined);
+    if (selectedTeams.length < 2) return null;
+    return calculateAllianceSynergyFromTeams(selectedTeams);
   }, [synergySelected, teams]);
 
   // Match Prediction
   const predictionResult = useMemo((): MatchPrediction | null => {
-    const nums1 = alliance1Ids
-      .map((id) => teams.find((t) => t.id === id)?.number)
-      .filter((n): n is number => n !== undefined);
-    const nums2 = alliance2Ids
-      .map((id) => teams.find((t) => t.id === id)?.number)
-      .filter((n): n is number => n !== undefined);
-    if (nums1.length === 0 || nums2.length === 0) return null;
-    return predictMatchOutcome(nums1, nums2);
+    const teams1 = alliance1Ids
+      .map((id) => teams.find((t) => t.id === id))
+      .filter((t): t is Team => t !== undefined);
+    const teams2 = alliance2Ids
+      .map((id) => teams.find((t) => t.id === id))
+      .filter((t): t is Team => t !== undefined);
+    if (teams1.length === 0 || teams2.length === 0) return null;
+    return predictMatchOutcome(teams1, teams2);
   }, [alliance1Ids, alliance2Ids, teams]);
 
   const synergyLevelColor = (level: string) => {

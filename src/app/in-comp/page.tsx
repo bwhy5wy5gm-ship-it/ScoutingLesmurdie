@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -193,10 +193,11 @@ function Question({
 
 export default function InCompPage() {
   const { account, settings } = useAuth();
-  const [teams, setTeams] = useState<Team[]>(() => {
-    if (typeof window === "undefined") return [];
-    return getTeams();
-  });
+  const [teams, setTeams] = useState<Team[]>([]);
+
+  useEffect(() => {
+    getTeams().then(setTeams);
+  }, []);
   const [search, setSearch] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -316,7 +317,7 @@ export default function InCompPage() {
     setTrialPhotos((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!draft.teamId) return;
 
     const match: MatchData = {
@@ -342,8 +343,9 @@ export default function InCompPage() {
       timestamp: new Date().toISOString(),
     };
 
-    addMatchToTeam(draft.teamId, match);
-    setTeams(getTeams());
+    await addMatchToTeam(draft.teamId, match);
+    const updated = await getTeams();
+    setTeams(updated);
     clearDraft();
 
     setDraft({

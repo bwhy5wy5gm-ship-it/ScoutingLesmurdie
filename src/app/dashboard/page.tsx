@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,7 +12,8 @@ import {
   getRecommendedAlliances,
   calculateStability,
 } from "@/lib/store";
-import { Team, TeamStats } from "@/lib/types";
+import type { HeatMapEntry } from "@/lib/store";
+import { Team, TeamStats, AllianceSynergy } from "@/lib/types";
 import {
   Trophy,
   Zap,
@@ -43,9 +44,26 @@ interface ScoutActivity {
 }
 
 export default function DashboardPage() {
-  const [teams] = useState<Team[]>(() => getTeams());
-  const [heatMapData] = useState(() => getHeatMapData());
-  const [alliances] = useState(() => getRecommendedAlliances());
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [heatMapData, setHeatMapData] = useState<HeatMapEntry[]>([]);
+  const [alliances, setAlliances] = useState<AllianceSynergy[]>([]);
+  const [scoutStats, setScoutStats] = useState<Record<string, { total: number; consistency: number }>>({});
+
+  useEffect(() => {
+    async function load() {
+      const t = await getTeams();
+      setTeams(t);
+      setHeatMapData(await getHeatMapData(t));
+      setAlliances(await getRecommendedAlliances(t));
+      const names = [...new Set(t.flatMap(team => (team.matches ?? []).map(m => m.scoutName)))];
+      const stats: Record<string, { total: number; consistency: number }> = {};
+      for (const name of names) {
+        stats[name] = await getScoutAccuracy(name);
+      }
+      setScoutStats(stats);
+    }
+    load();
+  }, []);
 
   const rankedTeams: RankedTeam[] = teams
     .map((t) => {
@@ -75,7 +93,7 @@ export default function DashboardPage() {
 
   const scoutActivity: ScoutActivity[] = Array.from(scoutMap.entries()).map(
     ([name, data]) => {
-      const { consistency } = getScoutAccuracy(name);
+      const { consistency } = scoutStats[name] ?? { total: 0, consistency: 0 };
       return {
         name,
         matchesScouted: data.count,
