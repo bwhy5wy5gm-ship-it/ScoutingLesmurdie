@@ -1,0 +1,392 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* ── Accent Colors ── */
+:root {
+  --accent-hue: 217;
+  --accent-sat: 91%;
+  --accent-lit: 60%;
+}
+.accent-blue   { --accent-hue: 217; --accent-sat: 91%;  --accent-lit: 60%; }
+.accent-red    { --accent-hue: 0;   --accent-sat: 84%;  --accent-lit: 60%; }
+.accent-purple { --accent-hue: 270; --accent-sat: 76%;  --accent-lit: 58%; }
+.accent-neon   { --accent-hue: 142; --accent-sat: 71%;  --accent-lit: 55%; }
+.accent-gold   { --accent-hue: 43;  --accent-sat: 96%;  --accent-lit: 56%; }
+.accent-aqua   { --accent-hue: 183; --accent-sat: 100%; --accent-lit: 55%; }
+
+.dark .accent-blue   { --accent-lit: 65%; }
+.dark .accent-red    { --accent-lit: 65%; }
+.dark .accent-purple { --accent-lit: 65%; }
+.dark .accent-neon   { --accent-sat: 100%; --accent-lit: 65%; }
+.dark .accent-gold   { --accent-lit: 60%; }
+.dark .accent-aqua   { --accent-lit: 60%; }
+
+/* ── True Black OLED ── */
+.true-black.dark {
+  --background: oklch(0 0 0);
+  --card: oklch(0.05 0 0);
+  --popover: oklch(0.05 0 0);
+  --muted: oklch(0.08 0 0);
+  --sidebar: oklch(0.03 0 0);
+  --sidebar-accent: oklch(0.08 0 0);
+  --border: oklch(1 0 0 / 7%);
+  --input: oklch(1 0 0 / 9%);
+}
+
+/* ── Glass Mode ──
+   Applied automatically when .glass-mode is on <html>.
+   Every Card, DialogContent, Popover, Sheet gets glass look.
+   No extra class needed on individual elements. */
+
+/* Light-mode glass */
+.glass-mode .bg-card,
+.glass-mode [class*="bg-card"],
+.glass-mode .card,
+.glass-mode [data-slot="card"] {
+  background: oklch(1 0 0 / 55%) !important;
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border-color: oklch(1 0 0 / 30%) !important;
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 3%),
+    0 4px 16px oklch(0 0 0 / 4%),
+    inset 0 1px 0 oklch(1 0 0 / 50%);
+}
+
+/* Dark-mode glass */
+.dark .glass-mode .bg-card,
+.dark .glass-mode [class*="bg-card"],
+.dark .glass-mode .card,
+.dark .glass-mode [data-slot="card"] {
+  background: oklch(0.12 0 0 / 55%) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-color: oklch(1 0 0 / 8%) !important;
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 15%),
+    0 4px 16px oklch(0 0 0 / 20%),
+    inset 0 1px 0 oklch(1 0 0 / 5%);
+}
+
+/* Glass accent glow – very subtle tint, no ring, no glow */
+.glass-mode .glass-accent,
+.dark .glass-mode .glass-accent {
+  border-color: oklch(0 0 0 / 8%) !important;
+  box-shadow: none !important;
+}
+.dark .glass-mode .glass-accent {
+  border-color: oklch(1 0 0 / 6%) !important;
+}
+
+/* Sidebar glass */
+.glass-mode [data-slot="sidebar"],
+.glass-mode .sidebar {
+  background: oklch(1 0 0 / 45%) !important;
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-color: oklch(1 0 0 / 20%) !important;
+}
+.dark .glass-mode [data-slot="sidebar"],
+.dark .glass-mode .sidebar {
+  background: oklch(0.08 0 0 / 50%) !important;
+  border-color: oklch(1 0 0 / 8%) !important;
+}
+
+/* Sheet / Dialog glass */
+.glass-mode [data-slot="sheet-content"],
+.glass-mode [role="dialog"] {
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+/* ── Page Transitions ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: fadeIn 0.25s ease-out both;
+}
+
+/* ── Animated Slider ── */
+input[type="range"].slider-animated {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.5rem;
+  border-radius: 9999px;
+  outline: none;
+  background: linear-gradient(
+    to right,
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit)) 0%,
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit)) var(--slider-pct, 50%),
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.18) var(--slider-pct, 50%),
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.18) 100%
+  );
+  transition: background 0.12s ease;
+}
+
+input[type="range"].slider-animated::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background: hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit));
+  border: 2px solid oklch(1 0 0 / 80%);
+  box-shadow: 0 1px 6px oklch(0 0 0 / 0.18);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+input[type="range"].slider-animated::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 10px hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.35);
+}
+
+input[type="range"].slider-animated::-moz-range-track {
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.18);
+}
+
+input[type="range"].slider-animated::-moz-range-thumb {
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background: hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit));
+  border: 2px solid oklch(1 0 0 / 80%);
+  box-shadow: 0 1px 6px oklch(0 0 0 / 0.18);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+
+input[type="range"].slider-animated::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* ── Progress bar ── */
+.progress-animate {
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── WARP Score ──
+   Calm accent tint background, no outline, no glow, no animation.
+   Matches the glass effect styling of other UI cards. */
+.warp-score {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.08),
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.03)
+  );
+  border: 1px solid oklch(0 0 0 / 6%);
+  border-radius: var(--radius-lg);
+  outline: none;
+  box-shadow: none;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.dark .warp-score {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.1),
+    hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.03)
+  );
+  border-color: oklch(1 0 0 / 6%);
+}
+
+.warp-score:focus,
+.warp-score:focus-visible,
+.warp-score:focus-within {
+  outline: none;
+  box-shadow: none;
+  border-color: oklch(0 0 0 / 6%);
+}
+
+.dark .warp-score:focus,
+.dark .warp-score:focus-visible,
+.dark .warp-score:focus-within {
+  border-color: oklch(1 0 0 / 6%);
+}
+
+/* ── Global Smoothness ── */
+@layer base {
+  * {
+    @apply border-border;
+    outline-color: transparent;
+  }
+  *:focus-visible {
+    outline: 2px solid hsl(var(--accent-hue) var(--accent-sat) var(--accent-lit) / 0.5);
+    outline-offset: 2px;
+  }
+  .warp-score:focus-visible {
+    outline: none;
+  }
+  body {
+    @apply bg-background text-foreground;
+    transition:
+      background-color 0.35s ease,
+      color 0.25s ease,
+      border-color 0.3s ease;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  img, video {
+    transition: opacity 0.3s ease;
+  }
+
+  /* Smooth transitions for interactive elements */
+  button, a, [role="tab"] {
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
+  }
+
+  /* Slider base (non-animated fallback) */
+  input[type="range"] {
+    touch-action: pan-x;
+    -webkit-tap-highlight-color: transparent;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 0.5rem;
+    border-radius: 9999px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    height: 1.25rem;
+    width: 1.25rem;
+    border-radius: 9999px;
+    background: hsl(var(--primary));
+    border: none;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
+    transition: transform 0.12s ease;
+  }
+  input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.1);
+  }
+
+  /* Badge smooth transitions */
+  [class*="badge"] {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  /* Select / Dropdown smooth open */
+  [data-slot="select-content"],
+  [role="listbox"] {
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+}
