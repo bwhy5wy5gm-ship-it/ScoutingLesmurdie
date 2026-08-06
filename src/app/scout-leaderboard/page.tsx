@@ -70,7 +70,7 @@ export default function ScoutLeaderboardPage() {
       : 0;
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-full">
       <div>
         <h1 className="text-3xl font-bold">Scout Leaderboard</h1>
         <p className="text-muted-foreground">Track scout performance and XP levels</p>
