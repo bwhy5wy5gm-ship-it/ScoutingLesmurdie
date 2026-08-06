@@ -43,6 +43,7 @@ import {
   Trash2,
   Upload,
   Zap,
+  Loader2,
 } from "lucide-react";
 
 function generateId() {
@@ -194,9 +195,13 @@ function Question({
 export default function InCompPage() {
   const { account, settings } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTeams().then(setTeams);
+    getTeams().then((data) => {
+      setTeams(data);
+      setLoading(false);
+    });
   }, []);
   const [search, setSearch] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -379,12 +384,20 @@ export default function InCompPage() {
     [trialPhotos]
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">In-Comp Scouting</h1>
         <p className="text-muted-foreground">
-          11-question form with slider-based ratings and auto-save
+          Saturday and Sunday Scouting
         </p>
       </div>
 

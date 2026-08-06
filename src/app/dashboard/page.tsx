@@ -27,6 +27,7 @@ import {
   Activity,
   AlertTriangle,
   Flame,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -48,6 +49,7 @@ export default function DashboardPage() {
   const [heatMapData, setHeatMapData] = useState<HeatMapEntry[]>([]);
   const [alliances, setAlliances] = useState<AllianceSynergy[]>([]);
   const [scoutStats, setScoutStats] = useState<Record<string, { total: number; consistency: number }>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -61,6 +63,7 @@ export default function DashboardPage() {
         stats[name] = await getScoutAccuracy(name);
       }
       setScoutStats(stats);
+      setLoading(false);
     }
     load();
   }, []);
@@ -159,10 +162,16 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">Event Dashboard</h1>
-        <p className="text-muted-foreground">Overview of event performance and statistics</p>
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+      <>
+        <div>
+          <h1 className="text-3xl font-bold">Event Dashboard</h1>
+          <p className="text-muted-foreground">Overview of event performance and statistics</p>
+        </div>
 
       <section>
         <div className="flex items-center gap-2 mb-4">
@@ -481,6 +490,8 @@ export default function DashboardPage() {
           </Card>
         </div>
       </section>
+      </>
+      )}
     </div>
   );
 }

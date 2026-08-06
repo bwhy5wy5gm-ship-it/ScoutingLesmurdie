@@ -13,12 +13,14 @@ import {
   BarChart3,
   GitCompareArrows,
   Activity,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -26,6 +28,7 @@ export default function HomePage() {
       setTeams(t);
       const s = await getSettings();
       setSettings(s);
+      setLoading(false);
     }
     load();
   }, []);
@@ -73,12 +76,18 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          {settings.currentEvent} &middot; Scout: {settings.scoutName}
-        </p>
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">
+              {settings.currentEvent} &middot; Scout: {settings.scoutName}
+            </p>
+          </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -218,6 +227,8 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -3,6 +3,8 @@ export interface Team {
   number: number;
   name: string;
   notes: string;
+  installNotes: string;
+  driveType: string;
   photos: Photo[];
   preComp: PreCompData;
   matches: MatchData[];

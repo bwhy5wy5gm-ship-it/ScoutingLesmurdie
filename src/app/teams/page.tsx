@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getTeams, addTeam, deleteTeam, calculateTeamStats } from "@/lib/store";
 import { Team } from "@/lib/types";
-import { Plus, Search, Trash2, Users } from "lucide-react";
+import { Plus, Search, Trash2, Users, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 export default function TeamsPage() {
@@ -29,9 +29,10 @@ export default function TeamsPage() {
     notes: "",
   });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTeams().then(setTeams);
+    getTeams().then(setTeams).finally(() => setLoading(false));
   }, []);
 
   const filtered = teams.filter(
@@ -49,6 +50,8 @@ export default function TeamsPage() {
       number: Number(newTeam.number),
       name: newTeam.name,
       notes: newTeam.notes,
+      installNotes: "",
+      driveType: "other",
       photos: [],
       preComp: {
         predictedAuto: 0,
@@ -82,6 +85,14 @@ export default function TeamsPage() {
     const updated = await getTeams();
     setTeams(updated);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -23,6 +23,7 @@ import { updateAccount, deleteAccount } from "@/lib/auth";
 import { Settings, AccentColor, ACCENT_COLORS } from "@/lib/types";
 import {
   Camera,
+  Loader2,
   LogOut,
   Save,
   Trash2,
@@ -51,7 +52,7 @@ function syncDocumentClasses(s: Settings) {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { account, settings, updateSettings, refreshAccount, logout } = useAuth();
+  const { account, settings, updateSettings, refreshAccount, logout, isLoading } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [username, setUsername] = useState(() => account?.username ?? "");
@@ -60,6 +61,14 @@ export default function ProfilePage() {
   const [profilePicture, setProfilePicture] = useState(() => account?.profilePicture ?? "");
   const [localSettings, setLocalSettings] = useState<Settings>(() => ({ ...settings }));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!account) {
     return (

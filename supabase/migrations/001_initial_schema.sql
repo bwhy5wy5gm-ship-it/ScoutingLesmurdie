@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS teams (
   number INTEGER UNIQUE NOT NULL,
   name TEXT NOT NULL DEFAULT '',
   notes TEXT DEFAULT '',
+  install_notes TEXT DEFAULT '',
+  drive_type TEXT DEFAULT 'other',
   pre_comp JSONB DEFAULT '{
     "predictedAuto": 5,
     "predictedTeleop": 5,

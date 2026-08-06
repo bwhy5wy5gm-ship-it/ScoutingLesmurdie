@@ -29,6 +29,7 @@ import {
   Download,
   Upload,
   Trash2,
+  Loader2,
 } from "lucide-react";
 
 function syncDocumentClasses(s: Settings) {
@@ -59,6 +60,7 @@ export default function SettingsPage() {
   const [teamCount, setTeamCount] = useState(0);
   const [newEvent, setNewEvent] = useState("");
   const [importJson, setImportJson] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setSettings(authSettings);
@@ -68,6 +70,7 @@ export default function SettingsPage() {
     async function load() {
       const t = await getTeams();
       setTeamCount(t.length);
+      setLoading(false);
     }
     load();
   }, []);
@@ -152,6 +155,14 @@ export default function SettingsPage() {
   };
 
   const showTrueBlack = settings.theme === "dark" || settings.theme === "system";
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-2xl">

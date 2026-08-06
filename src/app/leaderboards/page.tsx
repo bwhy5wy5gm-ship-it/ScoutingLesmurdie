@@ -14,6 +14,7 @@ import {
   Clock,
   Star,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -90,9 +91,13 @@ function getRankBadgeColor(rank: number) {
 
 export default function LeaderboardsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTeams().then(setTeams);
+    getTeams().then((data) => {
+      setTeams(data);
+      setLoading(false);
+    });
   }, []);
 
   const renderLeaderboard = (ranked: RankedTeam[]) => {
@@ -133,6 +138,14 @@ export default function LeaderboardsPage() {
       </div>
     );
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

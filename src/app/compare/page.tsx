@@ -33,6 +33,7 @@ import {
   CheckCircle,
   XCircle,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 
 interface StatRow {
@@ -225,9 +226,13 @@ function TeamMultiSelect({
 
 export default function ComparePage() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getTeams().then(setTeams);
+    getTeams().then((data) => {
+      setTeams(data);
+      setLoading(false);
+    });
   }, []);
   const [teamAId, setTeamAId] = useState<string>("");
   const [teamBId, setTeamBId] = useState<string>("");
@@ -348,6 +353,14 @@ export default function ComparePage() {
       default: return "bg-red-500/10 text-red-500 border-red-500/30";
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

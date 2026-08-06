@@ -83,6 +83,8 @@ export async function getTeams(): Promise<Team[]> {
       number: t.number,
       name: t.name,
       notes: t.notes,
+      installNotes: t.install_notes ?? "",
+      driveType: t.drive_type ?? "other",
       photos: (photosData ?? []).map((p) => ({
         id: p.id,
         url: p.url,
@@ -131,6 +133,8 @@ export async function addTeam(team: Team): Promise<{ error?: string }> {
       number: team.number,
       name: team.name,
       notes: team.notes,
+      install_notes: team.installNotes ?? "",
+      drive_type: team.driveType ?? "other",
       pre_comp: team.preComp ?? {
         predictedAuto: 5,
         predictedTeleop: 5,
@@ -160,6 +164,8 @@ export async function updateTeam(updated: Team): Promise<void> {
     .update({
       name: updated.name,
       notes: updated.notes,
+      install_notes: updated.installNotes ?? "",
+      drive_type: updated.driveType ?? "other",
       pre_comp: updated.preComp,
     })
     .eq("id", updated.id);

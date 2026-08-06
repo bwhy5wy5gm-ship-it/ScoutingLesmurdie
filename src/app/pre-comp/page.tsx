@@ -28,7 +28,7 @@ import {
   MAY_STRUGGLE_WITH_OPTIONS,
   PerformanceOpinion,
 } from "@/lib/types";
-import { Save, Search, Trash2, Upload } from "lucide-react";
+import { Loader2, Save, Search, Trash2, Upload } from "lucide-react";
 
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -120,10 +120,14 @@ export default function PreCompPage() {
   const [search, setSearch] = useState("");
   const [photoType, setPhotoType] = useState<PreCompPhotoType>("unit-photo");
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    getTeams().then(setTeams);
+    getTeams().then((data) => {
+      setTeams(data);
+      setLoading(false);
+    });
   }, []);
 
   const selectedTeam = useMemo(
@@ -222,12 +226,20 @@ export default function PreCompPage() {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Pre-Competition Scouting</h1>
         <p className="text-muted-foreground">
-          8-question pre-event analysis with slider ratings
+          Friday Scouting
         </p>
       </div>
 

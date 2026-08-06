@@ -5,7 +5,7 @@ import { getAllScoutStats } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Target, BarChart3 } from "lucide-react";
+import { Users, Target, BarChart3, Loader2 } from "lucide-react";
 
 type SortKey = "formsCompleted" | "accuracy" | "consistency";
 
@@ -50,9 +50,13 @@ const sortOptions: { key: SortKey; label: string }[] = [
 export default function ScoutLeaderboardPage() {
   const [sortKey, setSortKey] = useState<SortKey>("formsCompleted");
   const [stats, setStats] = useState<ScoutStat[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAllScoutStats().then(setStats);
+    getAllScoutStats().then((data) => {
+      setStats(data);
+      setLoading(false);
+    });
   }, []);
 
   const sorted = useMemo(() => {
@@ -68,6 +72,14 @@ export default function ScoutLeaderboardPage() {
     totalScouts > 0
       ? Math.round(stats.reduce((a, s) => a + s.consistency, 0) / totalScouts)
       : 0;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-full">

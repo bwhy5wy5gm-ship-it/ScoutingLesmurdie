@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,6 +51,7 @@ import {
   Calendar,
   User,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 function generateId() {
@@ -64,21 +66,42 @@ export default function TeamProfilePage() {
   const [team, setTeam] = useState<import("@/lib/types").Team | null>(null);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [notes, setNotes] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editNumber, setEditNumber] = useState("");
+  const [editInstallNotes, setEditInstallNotes] = useState("");
+  const [editDriveType, setEditDriveType] = useState<"swerve" | "tank" | "other">("other");
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoType, setPhotoType] = useState<PhotoType>("robot");
   const [filterType, setFilterType] = useState<PhotoType | "all">("all");
   const [previewPhoto, setPreviewPhoto] = useState<Photo | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const t = await getTeam(teamId);
       setTeam(t ?? null);
-      if (t) setNotes(t.notes ?? "");
+      if (t) {
+        setNotes(t.notes ?? "");
+        setEditName(t.name);
+        setEditNumber(String(t.number));
+        setEditInstallNotes(t.installNotes ?? "");
+        setEditDriveType((t.driveType as "swerve" | "tank" | "other") ?? "other");
+      }
       const s = await getSettings();
       setSettings(s);
+      setLoading(false);
     }
     load();
   }, [teamId, refreshKey]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!team) {
     return (
@@ -198,6 +221,20 @@ export default function TeamProfilePage() {
     setRefreshKey((k) => k + 1);
   };
 
+  const handleSaveTeamInfo = async () => {
+    setSaving(true);
+    const updated = {
+      ...team,
+      name: editName,
+      number: parseInt(editNumber) || team.number,
+      installNotes: editInstallNotes,
+      driveType: editDriveType,
+    };
+    await updateTeam(updated);
+    setRefreshKey((k) => k + 1);
+    setSaving(false);
+  };
+
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString("en-US", {
@@ -219,9 +256,6 @@ export default function TeamProfilePage() {
             <h1 className="text-3xl font-bold">
               {team.number} - {team.name}
             </h1>
-            <Badge variant="secondary" className="capitalize">
-              {driveSystemLabel}
-            </Badge>
           </div>
           <p className="text-muted-foreground">
             {(team.matches ?? []).length} matches scouted &middot; {allPhotos.length}{" "}
@@ -300,6 +334,9 @@ export default function TeamProfilePage() {
           </TabsTrigger>
           <TabsTrigger value="notes" className="gap-2">
             <FileText className="h-4 w-4" /> Notes
+          </TabsTrigger>
+          <TabsTrigger value="edit" className="gap-2">
+            <Save className="h-4 w-4" /> Edit
           </TabsTrigger>
         </TabsList>
 
@@ -655,6 +692,68 @@ export default function TeamProfilePage() {
               <Button onClick={handleSaveNotes}>
                 <Save className="mr-2 h-4 w-4" />
                 Save Notes
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="edit" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Edit Team Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Team Name</label>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Team name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Team Number</label>
+                  <Input
+                    type="number"
+                    value={editNumber}
+                    onChange={(e) => setEditNumber(e.target.value)}
+                    placeholder="Team number"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Drive Type</label>
+                <Select
+                  value={editDriveType}
+                  onValueChange={(v) => setEditDriveType(v as "swerve" | "tank" | "other")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="swerve">Swerve</SelectItem>
+                    <SelectItem value="tank">Tank</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Install Notes</label>
+                <Textarea
+                  value={editInstallNotes}
+                  onChange={(e) => setEditInstallNotes(e.target.value)}
+                  placeholder="Notes about this team's install, wiring, etc."
+                  rows={6}
+                />
+              </div>
+              <Button onClick={handleSaveTeamInfo} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Changes
               </Button>
             </CardContent>
           </Card>
