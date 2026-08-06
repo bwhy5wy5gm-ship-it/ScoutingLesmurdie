@@ -152,6 +152,9 @@ export async function addTeam(team: Team): Promise<{ error?: string }> {
 
   if (error) {
     console.error("Add team error:", error.message, error.details, error.hint);
+    if (error.code === "23505") {
+      return { error: "A team with that number already exists" };
+    }
     return { error: error.message };
   }
 
