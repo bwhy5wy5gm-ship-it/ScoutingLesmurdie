@@ -14,38 +14,33 @@ import {
 import { supabase } from "./supabase-browser";
 
 export async function getTeams(): Promise<Team[]> {
-  const { data: teamsData, error: teamsError } = await supabase
-    .from("teams")
-    .select("*")
-    .order("number", { ascending: true });
+  const [teamsResult, matchesResult, photosResult, trialPhotosResult, precompPhotosResult] =
+    await Promise.all([
+      supabase.from("teams").select("*").order("number", { ascending: true }),
+      supabase.from("matches").select("*").order("match_number", { ascending: true }),
+      supabase.from("photos").select("*"),
+      supabase.from("trial_photos").select("*"),
+      supabase.from("precomp_photos").select("*"),
+    ]);
 
-  if (teamsError || !teamsData) return [];
+  if (teamsResult.error) {
+    console.error("Get teams error:", teamsResult.error.message);
+    return [];
+  }
+  if (!teamsResult.data) return [];
 
-  const teams: Team[] = [];
+  const allMatches = matchesResult.data ?? [];
+  const allPhotos = photosResult.data ?? [];
+  const allTrialPhotos = trialPhotosResult.data ?? [];
+  const allPrecompPhotos = precompPhotosResult.data ?? [];
 
-  for (const t of teamsData) {
-    const { data: matchesData } = await supabase
-      .from("matches")
-      .select("*")
-      .eq("team_id", t.id)
-      .order("match_number", { ascending: true });
+  return teamsResult.data.map((t) => {
+    const teamMatches = allMatches.filter((m) => m.team_id === t.id);
+    const teamPhotos = allPhotos.filter((p) => p.team_id === t.id);
+    const teamTrialPhotos = allTrialPhotos.filter((tp) => tp.team_id === t.id);
+    const teamPrecompPhotos = allPrecompPhotos.filter((pp) => pp.team_id === t.id);
 
-    const { data: photosData } = await supabase
-      .from("photos")
-      .select("*")
-      .eq("team_id", t.id);
-
-    const { data: trialPhotosData } = await supabase
-      .from("trial_photos")
-      .select("*")
-      .eq("team_id", t.id);
-
-    const { data: precompPhotosData } = await supabase
-      .from("precomp_photos")
-      .select("*")
-      .eq("team_id", t.id);
-
-    const matches: MatchData[] = (matchesData ?? []).map((m) => ({
+    const matches: MatchData[] = teamMatches.map((m) => ({
       id: m.id,
       matchNumber: m.match_number,
       alliance: m.alliance as "red" | "blue",
@@ -63,7 +58,7 @@ export async function getTeams(): Promise<Team[]> {
       conditionalAutoFailed: m.conditional_auto_failed,
       conditionalEndgameAttempted: m.conditional_endgame_attempted,
       driveSystem: m.drive_system as "swerve" | "tank" | "other",
-      trialPhotos: (trialPhotosData ?? [])
+      trialPhotos: teamTrialPhotos
         .filter((tp) => tp.match_id === m.id)
         .map((tp) => ({
           id: tp.id,
@@ -78,14 +73,14 @@ export async function getTeams(): Promise<Team[]> {
       timestamp: m.timestamp,
     }));
 
-    teams.push({
+    return {
       id: t.id,
       number: t.number,
       name: t.name,
       notes: t.notes,
       installNotes: t.install_notes ?? "",
       driveType: t.drive_type ?? "other",
-      photos: (photosData ?? []).map((p) => ({
+      photos: teamPhotos.map((p) => ({
         id: p.id,
         url: p.url,
         label: p.label,
@@ -96,7 +91,7 @@ export async function getTeams(): Promise<Team[]> {
       })),
       preComp: {
         ...(t.pre_comp as PreCompData),
-        preCompPhotos: (precompPhotosData ?? []).map((pp) => ({
+        preCompPhotos: teamPrecompPhotos.map((pp) => ({
           id: pp.id,
           url: pp.url,
           photoType: pp.photo_type as "unit-photo" | "system-closeup" | "sensor-layout" | "auto-path",
@@ -106,10 +101,8 @@ export async function getTeams(): Promise<Team[]> {
         })),
       } as PreCompData,
       matches,
-    });
-  }
-
-  return teams;
+    };
+  });
 }
 
 export async function saveTeams(): Promise<void> {
@@ -127,7 +120,8 @@ export async function getTeamByNumber(number: number): Promise<Team | undefined>
 }
 
 export async function addTeam(team: Team): Promise<{ error?: string }> {
-  const { error } = await supabase
+  console.log("Adding team:", team.number, team.name);
+  const { data, error } = await supabase
     .from("teams")
     .insert({
       number: team.number,
