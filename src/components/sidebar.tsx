@@ -121,7 +121,7 @@ export function Sidebar() {
               <div className="flex items-center h-16 px-6 border-b">
                 <span className="text-xl font-bold">FRC Scout</span>
               </div>
-              <nav className="flex-1 px-3 py-4 space-y-1">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}

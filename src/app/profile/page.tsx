@@ -149,9 +149,9 @@ export default function ProfilePage() {
   const showTrueBlack = localSettings.theme === "dark" || localSettings.theme === "system";
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl px-4 sm:px-6">
       <div>
-        <h1 className="text-3xl font-bold">Profile</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Profile</h1>
         <p className="text-muted-foreground">Manage your account and appearance</p>
       </div>
 
@@ -161,7 +161,7 @@ export default function ProfilePage() {
           <CardTitle>Profile Picture</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
             <div
               className="relative h-24 w-24 rounded-full overflow-hidden bg-muted flex items-center justify-center cursor-pointer group"
               onClick={() => fileInputRef.current?.click()}
@@ -229,7 +229,7 @@ export default function ProfilePage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Username</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}

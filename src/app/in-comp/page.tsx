@@ -187,7 +187,7 @@ function Question({
           )}
         </div>
       </div>
-      <div className="pl-9">{children}</div>
+      <div className="pl-6 sm:pl-9">{children}</div>
     </div>
   );
 }
@@ -395,7 +395,7 @@ export default function InCompPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">In-Comp Scouting</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">In-Comp Scouting</h1>
         <p className="text-muted-foreground">
           Saturday and Sunday Scouting
         </p>
@@ -417,7 +417,7 @@ export default function InCompPage() {
                   className="pl-9"
                 />
               </div>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-2 max-h-40 sm:max-h-64 overflow-y-auto">
                 {(filtered ?? []).map((team) => (
                   <button
                     key={team.id}
@@ -445,7 +445,7 @@ export default function InCompPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-center py-4 tabular-nums">
+              <div className="text-3xl sm:text-4xl font-bold text-center py-4 tabular-nums">
                 {warpScore.toFixed(1)}
               </div>
               <p className="text-xs text-muted-foreground text-center">
@@ -475,7 +475,7 @@ export default function InCompPage() {
               </Progress>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 pb-4 border-b">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b">
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground uppercase tracking-wide">
                     Match Number

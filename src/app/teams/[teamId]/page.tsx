@@ -253,7 +253,7 @@ export default function TeamProfilePage() {
         </Button>
         <div>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-2xl sm:text-3xl font-bold">
               {team.number} - {team.name}
             </h1>
           </div>
@@ -322,7 +322,7 @@ export default function TeamProfilePage() {
       )}
 
       <Tabs defaultValue="stats">
-        <TabsList>
+        <TabsList className="overflow-x-auto">
           <TabsTrigger value="stats" className="gap-2">
             <BarChart3 className="h-4 w-4" /> Stats
           </TabsTrigger>
@@ -399,7 +399,7 @@ export default function TeamProfilePage() {
               <Separator />
               <div>
                 <h4 className="font-medium mb-2">Pre-Comp Predictions</h4>
-                <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Auto:</span>{" "}
                     {team.preComp.predictedAuto}
@@ -587,7 +587,7 @@ export default function TeamProfilePage() {
                         className="p-4 rounded-lg border space-y-3"
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
                             <Badge
                               variant={
                                 match.alliance === "red"
@@ -606,7 +606,7 @@ export default function TeamProfilePage() {
                               </div>
                             </div>
                           </div>
-                          <div className="text-right text-sm">
+                          <div className="text-right text-sm min-w-0 shrink">
                             <div>
                               Auto: {match.autoScore} | Tele:{" "}
                               {match.teleopScore} | End: {match.endgameScore}

@@ -82,13 +82,13 @@ export default function ScoutLeaderboardPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-full">
+    <div className="space-y-6 px-4 sm:px-6">
       <div>
-        <h1 className="text-3xl font-bold">Scout Leaderboard</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Scout Leaderboard</h1>
         <p className="text-muted-foreground">Track scout performance and XP levels</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6 text-center">
             <Users className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
@@ -113,7 +113,7 @@ export default function ScoutLeaderboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <CardTitle>Rankings</CardTitle>
           <div className="flex gap-2">
             {sortOptions.map((opt) => (
@@ -137,7 +137,7 @@ export default function ScoutLeaderboardPage() {
           {sorted.map((scout, idx) => (
             <div
               key={scout.accountId}
-              className="flex items-center justify-between p-3 rounded-lg border"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 rounded-lg border"
             >
               <div className="flex items-center gap-3">
                 <Badge className={getRankBadgeColor(idx)}>

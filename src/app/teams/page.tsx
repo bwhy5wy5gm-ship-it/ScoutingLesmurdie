@@ -96,9 +96,9 @@ export default function TeamsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Teams</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Teams</h1>
           <p className="text-muted-foreground">
             Manage teams and view their profiles
           </p>
@@ -154,7 +154,7 @@ export default function TeamsPage() {
         </Dialog>
       </div>
 
-      <div className="relative max-w-md">
+      <div className="relative w-full max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by number or name..."
@@ -166,7 +166,7 @@ export default function TeamsPage() {
 
       {filtered.length === 0 ? (
         <Card>
-          <CardContent className="py-16 text-center">
+          <CardContent className="py-8 sm:py-16 text-center">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
               {teams.length === 0
@@ -182,9 +182,9 @@ export default function TeamsPage() {
             return (
               <Card key={team.id} className="relative">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <Link href={`/teams/${team.id}`} className="hover:underline">
-                      <CardTitle>
+                  <div className="flex items-start justify-between min-w-0">
+                    <Link href={`/teams/${team.id}`} className="hover:underline min-w-0">
+                      <CardTitle className="truncate">
                         {team.number} - {team.name}
                       </CardTitle>
                     </Link>

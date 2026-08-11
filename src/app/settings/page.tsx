@@ -165,9 +165,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
           Configure your scouting application
         </p>
@@ -296,7 +296,7 @@ export default function SettingsPage() {
 
           <div className="space-y-2">
             <Label>Add New Event</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={newEvent}
                 onChange={(e) => setNewEvent(e.target.value)}

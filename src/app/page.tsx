@@ -83,7 +83,7 @@ export default function HomePage() {
       ) : (
         <>
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground">
               {settings.currentEvent} &middot; Scout: {settings.scoutName}
             </p>
@@ -162,14 +162,14 @@ export default function HomePage() {
                   <Link
                     key={item.team.id}
                     href={`/teams/${item.team.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors overflow-hidden"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <Badge variant={i === 0 ? "default" : "secondary"}>
                         #{i + 1}
                       </Badge>
-                      <div>
-                        <div className="font-medium">
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">
                           {item.team.number} - {item.team.name}
                         </div>
                         <div className="text-sm text-muted-foreground">
@@ -207,10 +207,10 @@ export default function HomePage() {
                 {recentMatches.map((m) => (
                   <div
                     key={m.id}
-                    className="flex items-center justify-between p-3 rounded-lg border"
+                    className="flex items-center justify-between p-3 rounded-lg border overflow-hidden"
                   >
-                    <div>
-                      <div className="font-medium">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">
                         Match #{m.matchNumber} &mdash; {m.teamNumber}{" "}
                         {m.teamName}
                       </div>

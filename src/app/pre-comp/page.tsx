@@ -108,7 +108,7 @@ function Question({
           )}
         </div>
       </div>
-      <div className="pl-9">{children}</div>
+      <div className="pl-6 sm:pl-9">{children}</div>
     </div>
   );
 }
@@ -235,9 +235,9 @@ export default function PreCompPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-6">
       <div>
-        <h1 className="text-3xl font-bold">Pre-Competition Scouting</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Pre-Competition Scouting</h1>
         <p className="text-muted-foreground">
           Friday Scouting
         </p>
@@ -259,7 +259,7 @@ export default function PreCompPage() {
                   className="pl-9"
                 />
               </div>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="space-y-2 max-h-48 sm:max-h-96 overflow-y-auto">
                 {filtered.map((team) => (
                   <button
                     key={team.id}

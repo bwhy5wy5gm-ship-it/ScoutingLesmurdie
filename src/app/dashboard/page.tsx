@@ -169,7 +169,7 @@ export default function DashboardPage() {
       ) : (
       <>
         <div>
-          <h1 className="text-3xl font-bold">Event Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Event Dashboard</h1>
           <p className="text-muted-foreground">Overview of event performance and statistics</p>
         </div>
 
@@ -185,7 +185,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {top5.map((item, i) => {
               const stability = calculateStability(item.team);
               return (
@@ -248,7 +248,7 @@ export default function DashboardPage() {
           <BarChart3 className="h-5 w-5 text-blue-500" />
           <h2 className="text-xl font-semibold">Category Leaders</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {categoryLeaders.map((cat) => (
             <Card key={cat.label}>
               <CardContent className="p-4">
@@ -294,27 +294,27 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4 font-medium text-muted-foreground">Team #</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">Team Name</th>
-                    <th className="text-left p-4 font-medium text-muted-foreground">Trend</th>
-                    <th className="text-right p-4 font-medium text-muted-foreground">WARP Delta</th>
-                    <th className="text-right p-4 font-medium text-muted-foreground">Reliability Delta</th>
+                    <th className="text-left p-2 sm:p-4 font-medium text-muted-foreground">Team #</th>
+                    <th className="text-left p-2 sm:p-4 font-medium text-muted-foreground">Team Name</th>
+                    <th className="text-left p-2 sm:p-4 font-medium text-muted-foreground">Trend</th>
+                    <th className="text-right p-2 sm:p-4 font-medium text-muted-foreground">WARP Delta</th>
+                    <th className="text-right p-2 sm:p-4 font-medium text-muted-foreground">Reliability Delta</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedHeatMap.map((entry) => (
                     <tr key={entry.teamNumber} className={`border-b last:border-0 ${getHeatMapRowBg(entry.trend)}`}>
-                      <td className="p-4 font-semibold">{entry.teamNumber}</td>
-                      <td className="p-4">{entry.teamName}</td>
-                      <td className="p-4">
+                      <td className="p-2 sm:p-4 font-semibold whitespace-nowrap">{entry.teamNumber}</td>
+                      <td className="p-2 sm:p-4 whitespace-nowrap">{entry.teamName}</td>
+                      <td className="p-2 sm:p-4">
                         <Badge variant="outline" className={`text-xs capitalize ${getTrendBadge(entry.trend)}`}>
                           {entry.trend}
                         </Badge>
                       </td>
-                      <td className={`p-4 text-right font-medium ${entry.warpDelta >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      <td className={`p-2 sm:p-4 text-right font-medium ${entry.warpDelta >= 0 ? "text-green-500" : "text-red-500"}`}>
                         {entry.warpDelta >= 0 ? "+" : ""}{entry.warpDelta.toFixed(1)}
                       </td>
-                      <td className={`p-4 text-right font-medium ${entry.reliabilityDelta >= 0 ? "text-green-500" : "text-red-500"}`}>
+                      <td className={`p-2 sm:p-4 text-right font-medium ${entry.reliabilityDelta >= 0 ? "text-green-500" : "text-red-500"}`}>
                         {entry.reliabilityDelta >= 0 ? "+" : ""}{entry.reliabilityDelta.toFixed(1)}
                       </td>
                     </tr>
@@ -388,7 +388,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6 text-right">
+                    <div className="flex items-center gap-2 sm:gap-6 text-right">
                       <div>
                         <div className="text-lg font-bold">{scout.avgWarpScore}</div>
                         <div className="text-xs text-muted-foreground">Avg WARP</div>

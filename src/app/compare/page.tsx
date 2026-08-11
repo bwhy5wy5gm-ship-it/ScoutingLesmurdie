@@ -365,7 +365,7 @@ export default function ComparePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold flex items-center gap-2">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
           <Scale className="h-8 w-8" />
           Unit Comparison
         </h1>
@@ -430,7 +430,7 @@ export default function ComparePage() {
 
       {!teamA && !teamB && teams.length > 0 && (
         <Card>
-          <CardContent className="flex items-center justify-center py-12">
+          <CardContent className="flex items-center justify-center py-8 md:py-12">
             <div className="text-center text-muted-foreground">
               <Scale className="h-12 w-12 mx-auto mb-3 opacity-40" />
               <p className="text-lg font-medium">Select two teams to compare</p>
@@ -452,7 +452,7 @@ export default function ComparePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-4 text-sm flex-wrap">
                   <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
                     {statsA.totalMatches} matches
                   </Badge>
@@ -473,7 +473,7 @@ export default function ComparePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-4 text-sm flex-wrap">
                   <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/30">
                     {statsB.totalMatches} matches
                   </Badge>
@@ -601,7 +601,7 @@ export default function ComparePage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-emerald-500">
+                  <div className="text-3xl md:text-4xl font-bold text-emerald-500">
                     {statsA.totalMatches}
                   </div>
                   <div className="text-sm text-muted-foreground">
@@ -612,7 +612,7 @@ export default function ComparePage() {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-blue-500">
+                  <div className="text-3xl md:text-4xl font-bold text-blue-500">
                     {statsB.totalMatches}
                   </div>
                   <div className="text-sm text-muted-foreground">
@@ -648,7 +648,7 @@ export default function ComparePage() {
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-4">
                 <div className="text-center">
-                  <div className="text-5xl font-bold">
+                  <div className="text-3xl md:text-5xl font-bold">
                     {synergyResult.score.toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">

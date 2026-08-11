@@ -122,7 +122,7 @@ export default function LeaderboardsPage() {
                 {i + 1}
               </Badge>
               <div>
-                <div className="font-medium">
+                <div className="font-medium min-w-0 truncate">
                   {item.team.number} - {item.team.name}
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -130,7 +130,7 @@ export default function LeaderboardsPage() {
                 </div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex-shrink-0">
               <div className="text-lg font-bold">{item.value.toFixed(1)}</div>
             </div>
           </Link>
@@ -148,16 +148,16 @@ export default function LeaderboardsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Leaderboards</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Leaderboards</h1>
         <p className="text-muted-foreground">
           Team rankings across all categories
         </p>
       </div>
 
       <Tabs defaultValue="overall">
-        <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto">
+        <TabsList className="grid grid-cols-4 md:grid-cols-7 h-auto overflow-x-auto">
           {categories.map((cat) => (
             <TabsTrigger
               key={cat.key}
