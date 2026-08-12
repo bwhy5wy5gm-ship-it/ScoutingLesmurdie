@@ -5,13 +5,14 @@ const headers = { "X-TBA-Auth-Key": TBA_KEY };
 
 async function tbaFetch<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${TBA_BASE}${path}`, {
-      headers,
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return null;
+    const res = await fetch(`${TBA_BASE}${path}`, { headers });
+    if (!res.ok) {
+      console.error("TBA fetch failed:", res.status, path);
+      return null;
+    }
     return res.json();
-  } catch {
+  } catch (e) {
+    console.error("TBA fetch error:", e);
     return null;
   }
 }
