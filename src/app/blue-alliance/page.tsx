@@ -7,13 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   TBAEvent,
   TBATeam,
   TBAMatch,
@@ -31,7 +24,6 @@ import {
   Loader2,
   Trophy,
   Search,
-  RefreshCw,
   ExternalLink,
   Users,
   Target,
@@ -46,6 +38,7 @@ export default function BlueAlliancePage() {
   const [rankings, setRankings] = useState<TBARanking | null>(null);
   const [matches, setMatches] = useState<TBAMatch[]>([]);
   const [search, setSearch] = useState("");
+  const [eventSearch, setEventSearch] = useState("");
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [teamSearch, setTeamSearch] = useState("");
@@ -105,6 +98,17 @@ export default function BlueAlliancePage() {
     (m) => m.red.score > 0 || m.blue.score > 0
   );
 
+  const filteredEvents = events
+    .filter((e) => e.event_type <= 2)
+    .filter(
+      (e) =>
+        e.name.toLowerCase().includes(eventSearch.toLowerCase()) ||
+        e.event_code.toLowerCase().includes(eventSearch.toLowerCase()) ||
+        e.city?.toLowerCase().includes(eventSearch.toLowerCase()) ||
+        e.state_prov?.toLowerCase().includes(eventSearch.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <div className="space-y-6 px-4 sm:px-6">
       <div>
@@ -114,54 +118,60 @@ export default function BlueAlliancePage() {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <Select
-            value={selectedEvent}
-            onValueChange={(v) => setSelectedEvent(v ?? "")}
-            disabled={loadingEvents}
-          >
-            <SelectTrigger>
-              <SelectValue
-                placeholder={
-                  loadingEvents ? "Loading events..." : "Select an event"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent className="max-h-80">
-              {events
-                .filter((e) => e.event_type <= 2)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((e) => (
-                  <SelectItem key={e.key} value={e.key}>
-                    {e.name} ({e.event_code.toUpperCase()})
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {selectedEvent && (
-          <Button
-            variant="outline"
-            onClick={() => {
-              setLoadingData(true);
-              Promise.all([
-                getTBAEventTeams(selectedEvent),
-                getTBAEventRankings(selectedEvent),
-                getTBAEventMatches(selectedEvent),
-              ]).then(([t, r, m]) => {
-                setTeams(t);
-                setRankings(r);
-                setMatches(m);
-                setLoadingData(false);
-              });
-            }}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
-          </Button>
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Select Event
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search events by name, code, city, or state..."
+              value={eventSearch}
+              onChange={(e) => setEventSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          {loadingEvents ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="max-h-64 overflow-y-auto space-y-1">
+              {filteredEvents.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">
+                  No events match your search
+                </p>
+              ) : (
+                filteredEvents.map((e) => (
+                  <button
+                    key={e.key}
+                    onClick={() => {
+                      setEventSearch("");
+                      setSelectedEvent(e.key);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                      selectedEvent === e.key
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-accent"
+                    }`}
+                  >
+                    <div className="font-medium">{e.name}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {e.event_code.toUpperCase()} &middot;{" "}
+                      {[e.city, e.state_prov].filter(Boolean).join(", ")}{" "}
+                      &middot; {e.start_date}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {!selectedEvent && (
         <Card>
