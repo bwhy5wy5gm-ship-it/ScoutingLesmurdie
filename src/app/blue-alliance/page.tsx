@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   TBAEvent,
   TBATeam,
   TBAMatch,
@@ -126,27 +133,50 @@ export default function BlueAlliancePage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search events by name, code, city, or state..."
-              value={eventSearch}
-              onChange={(e) => setEventSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          {loadingEvents ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search events..."
+                value={eventSearch}
+                onChange={(e) => setEventSearch(e.target.value)}
+                className="pl-9"
+              />
             </div>
-          ) : (
+            <div className="flex-1">
+              <Select
+                value={selectedEvent}
+                onValueChange={(v) => {
+                  setEventSearch("");
+                  setSelectedEvent(v ?? "");
+                }}
+                disabled={loadingEvents}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      loadingEvents ? "Loading events..." : "Or pick from dropdown"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-80">
+                  {filteredEvents.map((e) => (
+                    <SelectItem key={e.key} value={e.key}>
+                      {e.name} ({e.event_code.toUpperCase()})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {eventSearch && (
             <div className="max-h-64 overflow-y-auto space-y-1">
               {filteredEvents.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
                   No events match your search
                 </p>
               ) : (
-                filteredEvents.map((e) => (
+                filteredEvents.slice(0, 20).map((e) => (
                   <button
                     key={e.key}
                     onClick={() => {
