@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getTeams, updateTeam, calculatePreCompWarpScore } from "@/lib/store";
+import { getTeams, updateTeam, calculatePreCompWarpScore, uploadImage } from "@/lib/store";
 import { useAuth } from "@/components/auth-provider";
 import {
   Team,
@@ -186,7 +186,7 @@ export default function PreCompPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !selectedTeam) return;
 
@@ -196,24 +196,23 @@ export default function PreCompPage() {
     const remaining = 3 - currentPhotos.length;
     const filesToProcess = Array.from(files).slice(0, remaining);
 
-    filesToProcess.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const photo: PreCompPhoto = {
-          id: generateId(),
-          url: ev.target?.result as string,
-          photoType,
-          teamNumber: selectedTeam.number,
-          uploadedBy: account?.username ?? settings.scoutName,
-          uploadedAt: new Date().toISOString(),
-        };
-        updatePreComp("preCompPhotos", [
-          ...currentPhotos,
-          photo,
-        ]);
+    for (const file of filesToProcess) {
+      const url = await uploadImage(file);
+      if (!url) continue;
+
+      const photo: PreCompPhoto = {
+        id: generateId(),
+        url,
+        photoType,
+        teamNumber: selectedTeam.number,
+        uploadedBy: account?.username ?? settings.scoutName,
+        uploadedAt: new Date().toISOString(),
       };
-      reader.readAsDataURL(file);
-    });
+      updatePreComp("preCompPhotos", [
+        ...currentPhotos,
+        photo,
+      ]);
+    }
 
     if (fileInputRef.current) fileInputRef.current.value = "";
   };

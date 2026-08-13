@@ -14,6 +14,23 @@ import {
 } from "./types";
 import { supabase } from "./supabase-browser";
 
+export async function uploadImage(file: File): Promise<string | null> {
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("photos")
+    .upload(path, file, { contentType: file.type, upsert: false });
+
+  if (error) {
+    console.error("Upload error:", error.message);
+    return null;
+  }
+
+  const { data } = supabase.storage.from("photos").getPublicUrl(path);
+  return data?.publicUrl ?? null;
+}
+
 export async function getTeams(): Promise<Team[]> {
   const [teamsResult, matchesResult, photosResult, trialPhotosResult, precompPhotosResult] =
     await Promise.all([

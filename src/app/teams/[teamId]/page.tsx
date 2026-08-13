@@ -30,6 +30,7 @@ import {
   calculateStability,
   hasReliabilityDrop,
   suggestPhotoLabel,
+  uploadImage,
 } from "@/lib/store";
 import {
   Photo,
@@ -178,27 +179,26 @@ export default function TeamProfilePage() {
     const currentTeam = await getTeam(params.teamId as string);
     if (!currentTeam) return;
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const photo: Photo = {
-          id: generateId(),
-          url: ev.target?.result as string,
-          label: file.name.replace(/\.[^/.]+$/, ""),
-          photoType,
-          teamNumber: currentTeam.number,
-          uploadedBy: settings.scoutName,
-          uploadedAt: new Date().toISOString(),
-        };
-        const updated = {
-          ...currentTeam,
-          photos: [...(currentTeam.photos ?? []), photo],
-        };
-        updateTeam(updated);
-        setRefreshKey((k) => k + 1);
+    for (const file of Array.from(files)) {
+      const url = await uploadImage(file);
+      if (!url) continue;
+
+      const photo: Photo = {
+        id: generateId(),
+        url,
+        label: file.name.replace(/\.[^/.]+$/, ""),
+        photoType,
+        teamNumber: currentTeam.number,
+        uploadedBy: settings.scoutName,
+        uploadedAt: new Date().toISOString(),
       };
-      reader.readAsDataURL(file);
-    });
+      const updated = {
+        ...currentTeam,
+        photos: [...(currentTeam.photos ?? []), photo],
+      };
+      updateTeam(updated);
+      setRefreshKey((k) => k + 1);
+    }
 
     if (fileInputRef.current) fileInputRef.current.value = "";
   };

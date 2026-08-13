@@ -20,6 +20,7 @@ import {
   getTeams,
   calculateWarpScore,
   suggestPhotoLabel,
+  uploadImage,
 } from "@/lib/store";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -285,7 +286,7 @@ export default function InCompPage() {
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -298,22 +299,21 @@ export default function InCompPage() {
 
     const trialId = generateId();
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const photo: TrialPhoto = {
-          id: generateId(),
-          url: ev.target?.result as string,
-          photoType,
-          uploadedBy: account?.username ?? settings.scoutName,
-          uploadedAt: new Date().toISOString(),
-          trialId,
-          teamNumber: currentTeam.number,
-        };
-        setTrialPhotos((prev) => [...prev, photo]);
+    for (const file of Array.from(files)) {
+      const url = await uploadImage(file);
+      if (!url) continue;
+
+      const photo: TrialPhoto = {
+        id: generateId(),
+        url,
+        photoType,
+        uploadedBy: account?.username ?? settings.scoutName,
+        uploadedAt: new Date().toISOString(),
+        trialId,
+        teamNumber: currentTeam.number,
       };
-      reader.readAsDataURL(file);
-    });
+      setTrialPhotos((prev) => [...prev, photo]);
+    }
 
     if (fileInputRef.current) fileInputRef.current.value = "";
   };

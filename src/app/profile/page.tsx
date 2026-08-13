@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/components/auth-provider";
 import { updateAccount, deleteAccount } from "@/lib/auth";
+import { uploadImage } from "@/lib/store";
 import { Settings, AccentColor, ACCENT_COLORS } from "@/lib/types";
 import {
   Camera,
@@ -88,17 +89,14 @@ export default function ProfilePage() {
     .toUpperCase()
     .slice(0, 2);
 
-  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const result = reader.result as string;
-      setProfilePicture(result);
-      await updateAccount({ profilePicture: result });
-      await refreshAccount();
-    };
-    reader.readAsDataURL(file);
+    const url = await uploadImage(file);
+    if (!url) return;
+    setProfilePicture(url);
+    await updateAccount({ profilePicture: url });
+    await refreshAccount();
   };
 
   const handleSaveProfile = async () => {
