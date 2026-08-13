@@ -9,6 +9,7 @@ import {
   AllianceSynergy,
   MatchPrediction,
   PreCompData,
+  TeamMatch,
   DEFAULT_SETTINGS,
 } from "./types";
 import { supabase } from "./supabase-browser";
@@ -555,4 +556,50 @@ export async function resetAllData(): Promise<void> {
   await supabase.from("photos").delete().neq("id", "");
   await supabase.from("precomp_photos").delete().neq("id", "");
   await supabase.from("teams").delete().neq("id", "");
+}
+
+export async function getTeamMatches(teamNumber: number): Promise<TeamMatch[]> {
+  const { data, error } = await supabase
+    .from("team_matches")
+    .select("*")
+    .eq("team_number", teamNumber)
+    .order("match_number", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((m) => ({
+    id: m.id,
+    teamNumber: m.team_number,
+    teamName: m.team_name,
+    matchNumber: m.match_number,
+    day: m.day,
+    time: m.time,
+    alliance: m.alliance,
+    startPosition: m.start_position,
+    createdBy: m.created_by ?? "",
+    createdAt: m.created_at,
+  }));
+}
+
+export async function addTeamMatch(match: Omit<TeamMatch, "id" | "createdAt">): Promise<{ error?: string }> {
+  const { error } = await supabase.from("team_matches").insert({
+    team_number: match.teamNumber,
+    team_name: match.teamName,
+    match_number: match.matchNumber,
+    day: match.day,
+    time: match.time,
+    alliance: match.alliance,
+    start_position: match.startPosition,
+    created_by: match.createdBy,
+  });
+
+  if (error) {
+    console.error("Add team match error:", error.message);
+    return { error: error.message };
+  }
+  return {};
+}
+
+export async function deleteTeamMatch(id: string): Promise<void> {
+  await supabase.from("team_matches").delete().eq("id", id);
 }

@@ -264,3 +264,23 @@ export const ACCENT_COLORS: Record<AccentColor, { label: string; light: string; 
   gold:   { label: "Gold",   light: "43 96% 56%",   dark: "43 96% 56%" },
   aqua:   { label: "Aqua",   light: "183 100% 48%", dark: "183 100% 55%" },
 };
+
+export interface TeamMatch {
+  id: string;
+  teamNumber: number;
+  teamName: string;
+  matchNumber: number;
+  day: "friday" | "saturday" | "sunday";
+  time: string;
+  alliance: "red" | "blue";
+  startPosition: 1 | 2 | 3;
+  createdBy: string;
+  createdAt: string;
+}
+
+export const SCOUT_TEAMS = [
+  { number: 9979, name: "Billistic Beanz" },
+  { number: 9980, name: "Insert Name Here" },
+  { number: 9983, name: "Goopy Goopers" },
+  { number: 9996, name: "Grimpoteuthii" },
+] as const;

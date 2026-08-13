@@ -18,6 +18,7 @@ import {
   LogIn,
   LogOut,
   Globe,
+  CalendarDays,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/pre-comp", label: "Pre-Comp", icon: ClipboardList },
   { href: "/in-comp", label: "WARP Trial", icon: Timer },
+  { href: "/team-matches", label: "Team Matches", icon: CalendarDays },
   { href: "/leaderboards", label: "Leaderboards", icon: Trophy },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/compare", label: "Compare", icon: GitCompareArrows },
