@@ -603,3 +603,60 @@ export async function addTeamMatch(match: Omit<TeamMatch, "id" | "createdAt">): 
 export async function deleteTeamMatch(id: string): Promise<void> {
   await supabase.from("team_matches").delete().eq("id", id);
 }
+
+export interface AlliancePick {
+  id: string;
+  eventKey: string;
+  teamNumber: number;
+  teamName: string;
+  warpScore: number;
+  pickOrder: number;
+  pickedBy: string;
+  createdAt: string;
+}
+
+export async function getAlliancePicks(eventKey: string): Promise<AlliancePick[]> {
+  const { data, error } = await supabase
+    .from("alliance_picks")
+    .select("*")
+    .eq("event_key", eventKey)
+    .order("pick_order", { ascending: true });
+
+  if (error || !data) return [];
+
+  return data.map((p) => ({
+    id: p.id,
+    eventKey: p.event_key,
+    teamNumber: p.team_number,
+    teamName: p.team_name,
+    warpScore: p.warp_score ?? 0,
+    pickOrder: p.pick_order,
+    pickedBy: p.picked_by,
+    createdAt: p.created_at,
+  }));
+}
+
+export async function addAlliancePick(pick: Omit<AlliancePick, "id" | "createdAt">): Promise<{ error?: string }> {
+  const { error } = await supabase.from("alliance_picks").insert({
+    event_key: pick.eventKey,
+    team_number: pick.teamNumber,
+    team_name: pick.teamName,
+    warp_score: pick.warpScore,
+    pick_order: pick.pickOrder,
+    picked_by: pick.pickedBy,
+  });
+
+  if (error) {
+    console.error("Add alliance pick error:", error.message);
+    return { error: error.message };
+  }
+  return {};
+}
+
+export async function deleteAlliancePick(id: string): Promise<void> {
+  await supabase.from("alliance_picks").delete().eq("id", id);
+}
+
+export async function clearAlliancePicks(eventKey: string): Promise<void> {
+  await supabase.from("alliance_picks").delete().eq("event_key", eventKey);
+}

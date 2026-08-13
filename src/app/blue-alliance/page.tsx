@@ -4,8 +4,16 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   TBAEvent,
   TBATeam,
@@ -21,6 +29,16 @@ import {
   matchTime,
 } from "@/lib/tba";
 import {
+  getAlliancePicks,
+  addAlliancePick,
+  deleteAlliancePick,
+  clearAlliancePicks,
+  AlliancePick,
+  getTeams,
+  calculateTeamStats,
+} from "@/lib/store";
+import { useAuth } from "@/components/auth-provider";
+import {
   Loader2,
   Trophy,
   Search,
@@ -28,22 +46,33 @@ import {
   Users,
   Target,
   TrendingUp,
+  ClipboardList,
+  Trash2,
+  GripVertical,
+  Mic,
 } from "lucide-react";
 
 export default function BlueAlliancePage() {
   const year = getCurrentYear();
+  const { account } = useAuth();
   const [events, setEvents] = useState<TBAEvent[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<string>("");
+  const [selectedEvent, setSelectedEvent] = useState("");
+  const [eventSearch, setEventSearch] = useState("");
   const [teams, setTeams] = useState<TBATeam[]>([]);
   const [rankings, setRankings] = useState<TBARanking | null>(null);
   const [matches, setMatches] = useState<TBAMatch[]>([]);
   const [search, setSearch] = useState("");
-  const [eventSearch, setEventSearch] = useState("");
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingData, setLoadingData] = useState(false);
   const [teamSearch, setTeamSearch] = useState("");
   const [teamDetail, setTeamDetail] = useState<TBATeam | null>(null);
   const [loadingTeam, setLoadingTeam] = useState(false);
+
+  const [alliancePicks, setAlliancePicks] = useState<AlliancePick[]>([]);
+  const [pickTeamNumber, setPickTeamNumber] = useState("");
+  const [pickTeamName, setPickTeamName] = useState("");
+  const [pickWarpScore, setPickWarpScore] = useState("");
+  const [micMode, setMicMode] = useState(false);
 
   useEffect(() => {
     getTBAEvents(year).then((e) => {
@@ -59,10 +88,12 @@ export default function BlueAlliancePage() {
       getTBAEventTeams(selectedEvent),
       getTBAEventRankings(selectedEvent),
       getTBAEventMatches(selectedEvent),
-    ]).then(([t, r, m]) => {
+      getAlliancePicks(selectedEvent),
+    ]).then(([t, r, m, ap]) => {
       setTeams(t);
       setRankings(r);
       setMatches(m);
+      setAlliancePicks(ap);
       setLoadingData(false);
     });
   }, [selectedEvent]);
@@ -82,15 +113,6 @@ export default function BlueAlliancePage() {
     .sort((a, b) => (b.time || 0) - (a.time || 0))
     .slice(0, 20);
 
-  const handleTeamSearch = async () => {
-    if (!teamSearch) return;
-    setLoadingTeam(true);
-    const key = `frc${teamSearch}`;
-    const t = await getTBATeam(key);
-    setTeamDetail(t);
-    setLoadingTeam(false);
-  };
-
   const upcomingMatches = recentMatches.filter(
     (m) => m.red.score === 0 && m.blue.score === 0
   );
@@ -108,6 +130,113 @@ export default function BlueAlliancePage() {
         e.state_prov?.toLowerCase().includes(eventSearch.toLowerCase())
     )
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  const sortedPicks = [...alliancePicks].sort(
+    (a, b) => a.pickOrder - b.pickOrder
+  );
+
+  const handleAddPick = async () => {
+    if (!pickTeamNumber || !selectedEvent) return;
+    const result = await addAlliancePick({
+      eventKey: selectedEvent,
+      teamNumber: parseInt(pickTeamNumber),
+      teamName: pickTeamName,
+      warpScore: parseFloat(pickWarpScore) || 0,
+      pickOrder: alliancePicks.length + 1,
+      pickedBy: account?.username ?? "",
+    });
+    if (!result.error) {
+      const updated = await getAlliancePicks(selectedEvent);
+      setAlliancePicks(updated);
+      setPickTeamNumber("");
+      setPickTeamName("");
+      setPickWarpScore("");
+    }
+  };
+
+  const handleDeletePick = async (id: string) => {
+    await deleteAlliancePick(id);
+    if (selectedEvent) {
+      const updated = await getAlliancePicks(selectedEvent);
+      setAlliancePicks(updated);
+    }
+  };
+
+  const handleClearPicks = async () => {
+    if (!selectedEvent) return;
+    await clearAlliancePicks(selectedEvent);
+    setAlliancePicks([]);
+  };
+
+  const handleQuickAddFromRanked = async (r: TBARanking["rankings"][0]) => {
+    if (!selectedEvent) return;
+    const num = teamNumberFromKey(r.team_key);
+    const t = teams.find((tm) => tm.team_number === num);
+    const result = await addAlliancePick({
+      eventKey: selectedEvent,
+      teamNumber: num,
+      teamName: t?.nickname ?? "",
+      warpScore: r.sort_orders?.[0] ?? 0,
+      pickOrder: alliancePicks.length + 1,
+      pickedBy: account?.username ?? "",
+    });
+    if (!result.error) {
+      const updated = await getAlliancePicks(selectedEvent);
+      setAlliancePicks(updated);
+    }
+  };
+
+  if (micMode) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <Mic className="h-8 w-8" />
+              Alliance Selection
+            </h1>
+            <Button
+              variant="outline"
+              onClick={() => setMicMode(false)}
+              className="text-white border-white hover:bg-white/10"
+            >
+              Exit Mic Mode
+            </Button>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Event: {events.find((e) => e.key === selectedEvent)?.name ?? selectedEvent}
+          </p>
+          {sortedPicks.length === 0 ? (
+            <p className="text-xl text-center py-12 text-muted-foreground">
+              No teams picked yet
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {sortedPicks.map((pick, i) => (
+                <div
+                  key={pick.id}
+                  className="flex items-center gap-4 p-4 rounded-lg border border-white/20"
+                >
+                  <span className="text-2xl font-bold text-muted-foreground w-12">
+                    {pick.pickOrder}
+                  </span>
+                  <div className="flex-1">
+                    <div className="text-2xl font-bold">
+                      {pick.teamNumber} - {pick.teamName}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      WARP: {pick.warpScore.toFixed(1)} &middot; Picked by:{" "}
+                      {pick.pickedBy}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 px-4 sm:px-6">
@@ -173,17 +302,6 @@ export default function BlueAlliancePage() {
         </CardContent>
       </Card>
 
-      {!selectedEvent && (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Trophy className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              Select an event to view live data
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
       {selectedEvent && loadingData && (
         <div className="flex items-center justify-center min-h-[40vh]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -195,6 +313,9 @@ export default function BlueAlliancePage() {
           <TabsList className="overflow-x-auto">
             <TabsTrigger value="rankings" className="gap-2">
               <Trophy className="h-4 w-4" /> Rankings
+            </TabsTrigger>
+            <TabsTrigger value="alliance" className="gap-2">
+              <ClipboardList className="h-4 w-4" /> Alliance Selection
             </TabsTrigger>
             <TabsTrigger value="teams" className="gap-2">
               <Users className="h-4 w-4" /> Teams
@@ -261,6 +382,179 @@ export default function BlueAlliancePage() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="alliance" className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Card className="flex-1">
+                <CardHeader>
+                  <CardTitle>Add Team to Pick List</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Team Number</Label>
+                      <Input
+                        type="number"
+                        value={pickTeamNumber}
+                        onChange={(e) => setPickTeamNumber(e.target.value)}
+                        placeholder="e.g. 254"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>WARP Score</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={pickWarpScore}
+                        onChange={(e) => setPickWarpScore(e.target.value)}
+                        placeholder="e.g. 8.5"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Team Name (optional)</Label>
+                    <Input
+                      value={pickTeamName}
+                      onChange={(e) => setPickTeamName(e.target.value)}
+                      placeholder="e.g. The Cheesy Poofs"
+                    />
+                  </div>
+                  <Button onClick={handleAddPick} className="w-full">
+                    Add to Pick List
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="flex-1">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    Quick Add from Rankings
+                    {rankedTeams && rankedTeams.length > 0 && (
+                      <Badge variant="secondary">{rankedTeams.length} teams</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {rankedTeams?.slice(0, 20).map((r) => {
+                      const num = teamNumberFromKey(r.team_key);
+                      const team = teams.find((t) => t.team_number === num);
+                      const alreadyPicked = alliancePicks.some(
+                        (p) => p.teamNumber === num
+                      );
+                      return (
+                        <button
+                          key={r.team_key}
+                          onClick={() => handleQuickAddFromRanked(r)}
+                          disabled={alreadyPicked}
+                          className={`w-full flex items-center gap-2 p-2 rounded text-sm transition-colors ${
+                            alreadyPicked
+                              ? "opacity-40 cursor-not-allowed"
+                              : "hover:bg-accent"
+                          }`}
+                        >
+                          <Badge className="w-7 justify-center text-xs">
+                            {r.rank}
+                          </Badge>
+                          <span className="flex-1 text-left truncate">
+                            {num} - {team?.nickname ?? "Unknown"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {r.sort_orders?.[0]?.toFixed(1) ?? "—"}
+                          </span>
+                          {alreadyPicked && (
+                            <Badge variant="outline" className="text-xs">
+                              Picked
+                            </Badge>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5" />
+                    Pick List ({sortedPicks.length})
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setMicMode(true)}
+                      disabled={sortedPicks.length === 0}
+                    >
+                      <Mic className="mr-2 h-4 w-4" />
+                      Mic Mode
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleClearPicks}
+                      disabled={sortedPicks.length === 0}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Clear All
+                    </Button>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {sortedPicks.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No teams in pick list yet. Add teams above or quick-add from
+                    rankings.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {sortedPicks.map((pick, i) => (
+                      <div
+                        key={pick.id}
+                        className="flex items-center gap-3 p-3 rounded-lg border"
+                      >
+                        <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <Badge
+                          className={`w-8 justify-center flex-shrink-0 ${
+                            i === 0
+                              ? "bg-yellow-500 text-white"
+                              : i === 1
+                                ? "bg-gray-400 text-white"
+                                : i === 2
+                                  ? "bg-amber-700 text-white"
+                                  : ""
+                          }`}
+                        >
+                          {pick.pickOrder}
+                        </Badge>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium truncate">
+                            {pick.teamNumber} - {pick.teamName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            WARP: {pick.warpScore.toFixed(1)} &middot; Picked
+                            by: {pick.pickedBy}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0"
+                          onClick={() => handleDeletePick(pick.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
@@ -364,9 +658,27 @@ export default function BlueAlliancePage() {
                     placeholder="Enter team number..."
                     value={teamSearch}
                     onChange={(e) => setTeamSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleTeamSearch()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setLoadingTeam(true);
+                        getTBATeam(`frc${teamSearch}`).then((t) => {
+                          setTeamDetail(t);
+                          setLoadingTeam(false);
+                        });
+                      }
+                    }}
                   />
-                  <Button onClick={handleTeamSearch} disabled={loadingTeam}>
+                  <Button
+                    onClick={() => {
+                      if (!teamSearch) return;
+                      setLoadingTeam(true);
+                      getTBATeam(`frc${teamSearch}`).then((t) => {
+                        setTeamDetail(t);
+                        setLoadingTeam(false);
+                      });
+                    }}
+                    disabled={loadingTeam}
+                  >
                     {loadingTeam ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -376,7 +688,7 @@ export default function BlueAlliancePage() {
                   </Button>
                 </div>
                 {teamDetail && (
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-xl font-bold">
@@ -397,13 +709,19 @@ export default function BlueAlliancePage() {
                           </p>
                         )}
                       </div>
-                      <Button variant="outline" size="sm" render={<a
-                          href={`https://www.thebluealliance.com/team/${teamDetail.team_number}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />}>
-                          <ExternalLink className="mr-2 h-4 w-4" />
-                          TBA
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        render={
+                          <a
+                            href={`https://www.thebluealliance.com/team/${teamDetail.team_number}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          />
+                        }
+                      >
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        TBA
                       </Button>
                     </div>
                   </div>
@@ -427,13 +745,14 @@ function MatchRow({ match, teams }: { match: TBAMatch; teams: TBATeam[] }) {
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0 p-3 rounded-lg border text-sm">
       <div className="flex-1 flex items-center gap-2">
-        <Badge variant={redWin ? "destructive" : "outline"} className="w-10 justify-center">
+        <Badge
+          variant={redWin ? "destructive" : "outline"}
+          className="w-10 justify-center"
+        >
           RED
         </Badge>
         <div className="font-medium min-w-0 truncate">
-          {match.red.team_keys
-            .map((k) => teamNumberFromKey(k))
-            .join(" / ")}
+          {match.red.team_keys.map((k) => teamNumberFromKey(k)).join(" / ")}
         </div>
       </div>
       <div className="flex items-center justify-center gap-2 px-3 font-bold text-lg flex-shrink-0">
@@ -451,11 +770,12 @@ function MatchRow({ match, teams }: { match: TBAMatch; teams: TBATeam[] }) {
       </div>
       <div className="flex-1 flex items-center gap-2 justify-end">
         <div className="font-medium text-right min-w-0 truncate">
-          {match.blue.team_keys
-            .map((k) => teamNumberFromKey(k))
-            .join(" / ")}
+          {match.blue.team_keys.map((k) => teamNumberFromKey(k)).join(" / ")}
         </div>
-        <Badge variant={blueWin ? "default" : "outline"} className="w-10 justify-center">
+        <Badge
+          variant={blueWin ? "default" : "outline"}
+          className="w-10 justify-center"
+        >
           BLU
         </Badge>
       </div>
