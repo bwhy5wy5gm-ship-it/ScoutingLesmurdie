@@ -612,15 +612,21 @@ export interface AlliancePick {
   warpScore: number;
   pickOrder: number;
   pickedBy: string;
+  createdBy: string;
   createdAt: string;
 }
 
-export async function getAlliancePicks(eventKey: string): Promise<AlliancePick[]> {
-  const { data, error } = await supabase
+export async function getAlliancePicks(eventKey: string, userId?: string): Promise<AlliancePick[]> {
+  let query = supabase
     .from("alliance_picks")
     .select("*")
-    .eq("event_key", eventKey)
-    .order("pick_order", { ascending: true });
+    .eq("event_key", eventKey);
+
+  if (userId) {
+    query = query.eq("created_by", userId);
+  }
+
+  const { data, error } = await query.order("pick_order", { ascending: true });
 
   if (error || !data) return [];
 
@@ -632,6 +638,7 @@ export async function getAlliancePicks(eventKey: string): Promise<AlliancePick[]
     warpScore: p.warp_score ?? 0,
     pickOrder: p.pick_order,
     pickedBy: p.picked_by,
+    createdBy: p.created_by ?? "",
     createdAt: p.created_at,
   }));
 }
@@ -644,6 +651,7 @@ export async function addAlliancePick(pick: Omit<AlliancePick, "id" | "createdAt
     warp_score: pick.warpScore,
     pick_order: pick.pickOrder,
     picked_by: pick.pickedBy,
+    created_by: pick.createdBy,
   });
 
   if (error) {
@@ -657,6 +665,10 @@ export async function deleteAlliancePick(id: string): Promise<void> {
   await supabase.from("alliance_picks").delete().eq("id", id);
 }
 
-export async function clearAlliancePicks(eventKey: string): Promise<void> {
-  await supabase.from("alliance_picks").delete().eq("event_key", eventKey);
+export async function clearAlliancePicks(eventKey: string, userId?: string): Promise<void> {
+  let query = supabase.from("alliance_picks").delete().eq("event_key", eventKey);
+  if (userId) {
+    query = query.eq("created_by", userId);
+  }
+  await query;
 }

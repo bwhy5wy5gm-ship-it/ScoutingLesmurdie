@@ -88,7 +88,7 @@ export default function BlueAlliancePage() {
       getTBAEventTeams(selectedEvent),
       getTBAEventRankings(selectedEvent),
       getTBAEventMatches(selectedEvent),
-      getAlliancePicks(selectedEvent),
+      getAlliancePicks(selectedEvent, account?.id),
     ]).then(([t, r, m, ap]) => {
       setTeams(t);
       setRankings(r);
@@ -96,7 +96,7 @@ export default function BlueAlliancePage() {
       setAlliancePicks(ap);
       setLoadingData(false);
     });
-  }, [selectedEvent]);
+  }, [selectedEvent, account?.id]);
 
   const filteredTeams = teams.filter(
     (t) =>
@@ -144,9 +144,10 @@ export default function BlueAlliancePage() {
       warpScore: parseFloat(pickWarpScore) || 0,
       pickOrder: alliancePicks.length + 1,
       pickedBy: account?.username ?? "",
+      createdBy: account?.id ?? "",
     });
     if (!result.error) {
-      const updated = await getAlliancePicks(selectedEvent);
+      const updated = await getAlliancePicks(selectedEvent, account?.id);
       setAlliancePicks(updated);
       setPickTeamNumber("");
       setPickTeamName("");
@@ -157,14 +158,14 @@ export default function BlueAlliancePage() {
   const handleDeletePick = async (id: string) => {
     await deleteAlliancePick(id);
     if (selectedEvent) {
-      const updated = await getAlliancePicks(selectedEvent);
+      const updated = await getAlliancePicks(selectedEvent, account?.id);
       setAlliancePicks(updated);
     }
   };
 
   const handleClearPicks = async () => {
     if (!selectedEvent) return;
-    await clearAlliancePicks(selectedEvent);
+    await clearAlliancePicks(selectedEvent, account?.id);
     setAlliancePicks([]);
   };
 
@@ -179,9 +180,10 @@ export default function BlueAlliancePage() {
       warpScore: r.sort_orders?.[0] ?? 0,
       pickOrder: alliancePicks.length + 1,
       pickedBy: account?.username ?? "",
+      createdBy: account?.id ?? "",
     });
     if (!result.error) {
-      const updated = await getAlliancePicks(selectedEvent);
+      const updated = await getAlliancePicks(selectedEvent, account?.id);
       setAlliancePicks(updated);
     }
   };
