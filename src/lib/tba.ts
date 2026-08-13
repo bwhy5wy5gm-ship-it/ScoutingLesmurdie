@@ -1,11 +1,14 @@
 const TBA_BASE = "https://www.thebluealliance.com/api/v3";
-const TBA_KEY = process.env.NEXT_PUBLIC_TBA_AUTH_KEY ?? "";
 
-const headers = { "X-TBA-Auth-Key": TBA_KEY };
+function getTbaKey(): string {
+  return process.env.NEXT_PUBLIC_TBA_AUTH_KEY ?? "";
+}
 
 async function tbaFetch<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${TBA_BASE}${path}`, { headers });
+    const key = getTbaKey();
+    const separator = path.includes("?") ? "&" : "?";
+    const res = await fetch(`${TBA_BASE}${path}${separator}X-TBA-Auth-Key=${key}`);
     if (!res.ok) {
       console.error("TBA fetch failed:", res.status, path);
       return null;
