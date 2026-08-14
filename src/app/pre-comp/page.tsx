@@ -168,20 +168,20 @@ export default function PreCompPage() {
 
   const updatePreComp = async (field: string, value: number | string | PreCompPhoto[] | string[]) => {
     if (!selectedTeam) return;
-    const updated = {
-      ...selectedTeam,
-      preComp: { ...selectedTeam.preComp, [field]: value },
-    };
+    const updatedPreComp = { ...selectedTeam.preComp, [field]: value, scoutName: account?.username ?? settings.scoutName };
+    const updated = { ...selectedTeam, preComp: updatedPreComp };
+    setTeams((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
     await updateTeam(updated);
-    const refreshed = await getTeams();
-    setTeams(refreshed);
   };
 
   const handleSave = async () => {
     if (!selectedTeam) return;
-    await updateTeam(selectedTeam);
-    const refreshed = await getTeams();
-    setTeams(refreshed);
+    const updated = {
+      ...selectedTeam,
+      preComp: { ...selectedTeam.preComp, scoutName: account?.username ?? settings.scoutName },
+    };
+    setTeams((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    await updateTeam(updated);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -384,21 +384,12 @@ export default function PreCompPage() {
                   title="I think this unit's strongest system is…"
                   description="Identify the primary system advantage."
                 >
-                  <Select
+                  <Textarea
                     value={selectedTeam.preComp.strongestSystem}
-                    onValueChange={(v) => updatePreComp("strongestSystem", v ?? "")}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select strongest system" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STRONGEST_SYSTEM_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => updatePreComp("strongestSystem", e.target.value)}
+                    placeholder="e.g. Shooter, Intake, Drive train..."
+                    rows={2}
+                  />
                 </Question>
 
                 <Question
@@ -406,21 +397,12 @@ export default function PreCompPage() {
                   title="I feel this unit may struggle with…"
                   description="Identify potential weaknesses or challenges."
                 >
-                  <Select
+                  <Textarea
                     value={selectedTeam.preComp.mayStruggleWith}
-                    onValueChange={(v) => updatePreComp("mayStruggleWith", v ?? "")}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select potential struggle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MAY_STRUGGLE_WITH_OPTIONS.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => updatePreComp("mayStruggleWith", e.target.value)}
+                    placeholder="e.g. Shooting under pressure, Endgame consistency..."
+                    rows={2}
+                  />
                 </Question>
 
                 <Question
@@ -459,7 +441,7 @@ export default function PreCompPage() {
                         type="file"
                         accept="image/*"
                         multiple
-                        className="hidden"
+                        style={{ position: "absolute", left: "-9999px", opacity: 0 }}
                         onChange={handlePhotoUpload}
                       />
                     </div>
@@ -487,7 +469,7 @@ export default function PreCompPage() {
                             <Button
                               variant="destructive"
                               size="icon"
-                              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 h-6 w-6 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                               onClick={() => removePhoto(photo.id)}
                             >
                               <Trash2 className="h-3 w-3" />

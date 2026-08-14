@@ -65,6 +65,7 @@ export default function TeamsPage() {
         notes: "",
         videoLinks: [],
         preCompPhotos: [],
+        scoutName: "",
       },
       matches: [],
     };

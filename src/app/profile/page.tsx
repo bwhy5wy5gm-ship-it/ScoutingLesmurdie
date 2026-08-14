@@ -212,7 +212,7 @@ export default function ProfilePage() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              className="hidden"
+              style={{ position: "absolute", left: "-9999px", opacity: 0 }}
               onChange={handleProfilePictureChange}
             />
           </div>

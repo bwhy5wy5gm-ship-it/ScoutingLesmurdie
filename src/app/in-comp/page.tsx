@@ -136,11 +136,13 @@ function FormSlider({
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="slider-animated w-full h-2 rounded-full appearance-none cursor-pointer
+        className="slider-animated w-full h-3 sm:h-2 rounded-full appearance-none cursor-pointer
           bg-primary/20
           [&::-webkit-slider-thumb]:appearance-none
-          [&::-webkit-slider-thumb]:h-5
-          [&::-webkit-slider-thumb]:w-5
+          [&::-webkit-slider-thumb]:h-7
+          [&::-webkit-slider-thumb]:w-7
+          [&::-webkit-slider-thumb]:sm:h-5
+          [&::-webkit-slider-thumb]:sm:w-5
           [&::-webkit-slider-thumb]:rounded-full
           [&::-webkit-slider-thumb]:bg-primary
           [&::-webkit-slider-thumb]:shadow-md
@@ -176,19 +178,19 @@ function Question({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-3 p-4 rounded-lg border bg-card/50">
-      <div className="flex items-start gap-3">
+    <div className="space-y-3 p-3 sm:p-4 rounded-lg border bg-card/50">
+      <div className="flex items-start gap-2 sm:gap-3">
         <Badge className="mt-0.5 shrink-0 h-6 w-6 rounded-full flex items-center justify-center text-xs">
           {number}
         </Badge>
-        <div className="space-y-1 min-w-0">
-          <Label className="text-sm font-medium leading-none">{title}</Label>
+        <div className="space-y-1 min-w-0 flex-1">
+          <Label className="text-sm font-medium leading-snug break-words">{title}</Label>
           {description && (
             <p className="text-xs text-muted-foreground">{description}</p>
           )}
         </div>
       </div>
-      <div className="pl-6 sm:pl-9">{children}</div>
+      <div className="pl-8 sm:pl-9">{children}</div>
     </div>
   );
 }
@@ -393,7 +395,7 @@ export default function InCompPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-6">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">In-Comp Scouting</h1>
         <p className="text-muted-foreground">
@@ -417,7 +419,7 @@ export default function InCompPage() {
                   className="pl-9"
                 />
               </div>
-              <div className="space-y-2 max-h-40 sm:max-h-64 overflow-y-auto">
+              <div className="space-y-2 max-h-48 sm:max-h-64 overflow-y-auto">
                 {(filtered ?? []).map((team) => (
                   <button
                     key={team.id}
@@ -692,21 +694,11 @@ export default function InCompPage() {
                 title={'"I think this unit\'s biggest strength was…"'}
                 description="Select the unit's strongest area."
               >
-                <Select
+                <Input
                   value={draft.biggestStrength}
-                  onValueChange={(v) => updateDraft({ biggestStrength: v ?? "" })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a strength" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(STRENGTH_OPTIONS ?? []).map((opt) => (
-                      <SelectItem key={opt} value={opt}>
-                        {opt}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => updateDraft({ biggestStrength: e.target.value })}
+                  placeholder="e.g. Shooting accuracy, Speed, Climbing..."
+                />
               </Question>
 
               <Question
@@ -714,21 +706,11 @@ export default function InCompPage() {
                 title={'"I feel this unit struggled with…"'}
                 description="Select the unit's biggest weakness."
               >
-                <Select
+                <Input
                   value={draft.unitStruggledWith}
-                  onValueChange={(v) => updateDraft({ unitStruggledWith: v ?? "" })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a struggle" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(STRUGGLE_OPTIONS ?? []).map((opt) => (
-                      <SelectItem key={opt} value={opt}>
-                        {opt}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => updateDraft({ unitStruggledWith: e.target.value })}
+                  placeholder="e.g. Inconsistent shooting, Slow cycles..."
+                />
               </Question>
 
               <Question
@@ -813,7 +795,7 @@ export default function InCompPage() {
                       type="file"
                       accept="image/*"
                       multiple
-                      className="hidden"
+                      style={{ position: "absolute", left: "-9999px", opacity: 0 }}
                       onChange={handlePhotoUpload}
                     />
                   </div>
@@ -845,7 +827,7 @@ export default function InCompPage() {
                           <Button
                             variant="destructive"
                             size="icon"
-                            className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute top-1 right-1 h-6 w-6 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                             onClick={() => removeTrialPhoto(photo.id)}
                           >
                             <Trash2 className="h-3 w-3" />

@@ -453,7 +453,7 @@ export default function TeamProfilePage() {
                     type="file"
                     accept="image/*"
                     multiple
-                    className="hidden"
+                    style={{ position: "absolute", left: "-9999px", opacity: 0 }}
                     onChange={handlePhotoUpload}
                   />
                 </div>
@@ -538,7 +538,7 @@ export default function TeamProfilePage() {
                       <Button
                         variant="destructive"
                         size="icon"
-                        className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-2 right-2 h-7 w-7 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeletePhoto(photo.id);
@@ -546,7 +546,7 @@ export default function TeamProfilePage() {
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
-                      <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-0 left-0 right-0 p-3 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/70 via-black/30 to-transparent sm:from-transparent sm:via-transparent sm:to-transparent">
                         <div className="text-white text-sm font-medium truncate">
                           {"label" in photo ? photo.label : "Trial Photo"}
                         </div>

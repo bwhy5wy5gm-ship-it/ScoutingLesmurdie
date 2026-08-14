@@ -282,42 +282,52 @@ export async function getAllScoutStats(): Promise<{
 
   if (!profiles) return [];
 
-  const stats: {
-    username: string;
-    accountId: string;
-    teamsScouted: number;
-    formsCompleted: number;
-    accuracy: number;
-    consistency: number;
-  }[] = [];
+  const { data: allMatches } = await supabase
+    .from("matches")
+    .select("team_id, warp_score, scout_name");
 
-  for (const profile of profiles) {
-    const { data: matches } = await supabase
-      .from("matches")
-      .select("team_id, warp_score")
-      .eq("scout_name", profile.username);
+  const { data: allTeams } = await supabase
+    .from("teams")
+    .select("id, pre_comp");
 
-    const formsCompleted = matches?.length ?? 0;
-    const teamNumbers = new Set(matches?.map((m) => m.team_id));
+  return profiles.map((profile) => {
+    const myMatches = (allMatches ?? []).filter(
+      (m) => m.scout_name?.toLowerCase().trim() === profile.username.toLowerCase().trim()
+    );
+    const matchCount = myMatches.length;
+    const matchTeamIds = new Set(myMatches.map((m) => m.team_id));
+
+    const myPreCompTeams = (allTeams ?? []).filter((t) => {
+      const pc = t.pre_comp as Record<string, unknown> | null;
+      if (!pc || typeof pc !== "object") return false;
+      const sc = typeof pc.scoutName === "string" ? pc.scoutName : "";
+      return sc.toLowerCase().trim() === profile.username.toLowerCase().trim();
+    });
+    const preCompTeamIds = new Set(myPreCompTeams.map((t) => t.id));
+
+    const allScoutedTeamIds = new Set([...matchTeamIds, ...preCompTeamIds]);
+    const formsCompleted = matchCount + myPreCompTeams.length;
 
     let accuracy = 50;
     let consistency = 50;
-    if (matches && matches.length > 0) {
-      const avg = matches.reduce((a, m) => a + m.warp_score, 0) / matches.length;
-      const variance = matches.reduce((a, m) => a + Math.pow(m.warp_score - avg, 2), 0) / matches.length;
+    if (myMatches.length > 0) {
+      const avg = myMatches.reduce((a, m) => a + m.warp_score, 0) / myMatches.length;
+      const variance =
+        myMatches.reduce((a, m) => a + Math.pow(m.warp_score - avg, 2), 0) /
+        myMatches.length;
       consistency = Math.max(0, 100 - Math.round(Math.sqrt(variance) * 10));
-      accuracy = Math.min(100, 50 + Math.round(matches.length * 3));
+      accuracy = Math.min(100, 50 + Math.round(formsCompleted * 3));
+    } else if (myPreCompTeams.length > 0) {
+      accuracy = Math.min(100, 50 + Math.round(myPreCompTeams.length * 5));
     }
 
-    stats.push({
+    return {
       username: profile.username,
       accountId: profile.id,
-      teamsScouted: teamNumbers.size,
+      teamsScouted: allScoutedTeamIds.size,
       formsCompleted,
       accuracy,
       consistency,
-    });
-  }
-
-  return stats;
+    };
+  });
 }

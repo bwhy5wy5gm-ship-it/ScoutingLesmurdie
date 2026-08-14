@@ -268,8 +268,8 @@ export default function TeamMatchesPage() {
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
                               <Badge
-                                variant={m.alliance === "red" ? "destructive" : "default"}
-                                className="w-10 justify-center flex-shrink-0"
+                                variant={m.alliance === "red" ? "destructive" : "outline"}
+                                className={`w-10 justify-center flex-shrink-0 ${m.alliance === "blue" ? "border-blue-500 text-blue-500 bg-blue-500/10" : ""}`}
                               >
                                 {m.alliance === "red" ? "RED" : "BLU"}
                               </Badge>

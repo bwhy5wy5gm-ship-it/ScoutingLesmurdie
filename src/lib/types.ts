@@ -64,6 +64,7 @@ export interface PreCompData {
   notes: string;
   videoLinks: string[];
   preCompPhotos: PreCompPhoto[];
+  scoutName: string;
 }
 
 export type PreCompPhotoType =
