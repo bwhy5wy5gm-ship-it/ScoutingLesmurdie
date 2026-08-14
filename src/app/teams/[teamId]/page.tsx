@@ -441,21 +441,22 @@ export default function TeamProfilePage() {
                       <SelectItem value="auto-path">Auto Path</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Photo
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    style={{ position: "absolute", left: "-9999px", opacity: 0 }}
-                    onChange={handlePhotoUpload}
-                  />
+                  <div className="relative inline-flex">
+                    <Button
+                      size="sm"
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Photo
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePhotoUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">

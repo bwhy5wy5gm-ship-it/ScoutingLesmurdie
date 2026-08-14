@@ -185,14 +185,22 @@ export default function ProfilePage() {
             <div className="space-y-1">
               <p className="text-sm font-medium">{account.username}</p>
               <p className="text-xs text-muted-foreground">Click the avatar to upload</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Camera className="mr-2 h-3.5 w-3.5" />
-                {profilePicture ? "Change Photo" : "Upload Photo"}
-              </Button>
+              <div className="relative inline-flex">
+                <Button
+                  variant="outline"
+                  size="sm"
+                >
+                  <Camera className="mr-2 h-3.5 h-3.5" />
+                  {profilePicture ? "Change Photo" : "Upload Photo"}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
               {profilePicture && (
                 <Button
                   variant="ghost"
@@ -208,13 +216,6 @@ export default function ProfilePage() {
                 </Button>
               )}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ position: "absolute", left: "-9999px", opacity: 0 }}
-              onChange={handleProfilePictureChange}
-            />
           </div>
         </CardContent>
       </Card>

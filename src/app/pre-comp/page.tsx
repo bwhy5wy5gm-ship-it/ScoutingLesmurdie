@@ -428,22 +428,23 @@ export default function PreCompPage() {
                           <SelectItem value="auto-path">Auto Path</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={(selectedTeam.preComp.preCompPhotos ?? []).length >= 3}
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                      </Button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        style={{ position: "absolute", left: "-9999px", opacity: 0 }}
-                        onChange={handlePhotoUpload}
-                      />
+                      <div className="relative inline-flex">
+                        <Button
+                          size="sm"
+                          disabled={(selectedTeam.preComp.preCompPhotos ?? []).length >= 3}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handlePhotoUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </div>
                     </div>
 
                     {(selectedTeam.preComp.preCompPhotos ?? []).length > 0 && (
