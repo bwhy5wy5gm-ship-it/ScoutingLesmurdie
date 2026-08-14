@@ -307,17 +307,30 @@ export function calculateTeamStats(team: Team) {
   const avgReliability = avg(matches.map((m) => m.reliabilityRating));
   const avgWarpScore = avg(matches.map((m) => m.warpScore));
 
+  const blend = (matchAvg: number, predicted: number | undefined) => {
+    if (predicted === undefined || predicted === 0) return matchAvg;
+    const weight = Math.min(matches.length / 5, 1);
+    return Math.round((matchAvg * weight + predicted * (1 - weight)) * 10) / 10;
+  };
+
+  const blendedAuto = blend(avgAuto, preComp?.predictedAuto);
+  const blendedTeleop = blend(avgTeleop, preComp?.predictedTeleop);
+  const blendedEndgame = blend(avgEndgame, preComp?.predictedEndgame);
+  const blendedReliability = blend(avgReliability, preComp?.predictedReliability);
+  const preCompWarp = preComp ? calculatePreCompWarpScore(preComp) : 0;
+  const blendedWarp = blend(avgWarpScore, preCompWarp || undefined);
+
   const overallRating = Math.round(
-    (avgAuto + avgTeleop + avgEndgame + avgReliability + avgWarpScore) / 5
+    (blendedAuto + blendedTeleop + blendedEndgame + blendedReliability + blendedWarp) / 5
   );
 
   return {
-    avgAuto: Math.round(avgAuto * 10) / 10,
-    avgTeleop: Math.round(avgTeleop * 10) / 10,
-    avgEndgame: Math.round(avgEndgame * 10) / 10,
+    avgAuto: Math.round(blendedAuto * 10) / 10,
+    avgTeleop: Math.round(blendedTeleop * 10) / 10,
+    avgEndgame: Math.round(blendedEndgame * 10) / 10,
     avgCycleEfficiency: Math.round(avgCycleEfficiency * 10) / 10,
-    avgReliability: Math.round(avgReliability * 10) / 10,
-    avgWarpScore: Math.round(avgWarpScore * 10) / 10,
+    avgReliability: Math.round(blendedReliability * 10) / 10,
+    avgWarpScore: Math.round(blendedWarp * 10) / 10,
     totalMatches: matches.length,
     overallRating,
   };
