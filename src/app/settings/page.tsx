@@ -217,14 +217,22 @@ export default function SettingsPage() {
 
           <Separator />
 
-          <Button
-            variant="destructive"
-            className="w-full"
-            onClick={handleReset}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Reset All Local Data
-          </Button>
+          <div className="p-4 rounded-lg border border-destructive/50 bg-destructive/5 space-y-3">
+            <div>
+              <p className="text-sm font-medium text-destructive">Danger Zone</p>
+              <p className="text-xs text-muted-foreground">
+                This will permanently delete all teams, matches, photos, and scouting data from the cloud. This cannot be undone.
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={handleReset}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete All Data
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

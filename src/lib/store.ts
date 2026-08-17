@@ -183,6 +183,23 @@ export async function deleteTeam(id: string): Promise<void> {
   await supabase.from("teams").delete().eq("id", id);
 }
 
+export async function addTeamPhoto(teamId: string, photo: { id: string; url: string; label: string; photoType: string; teamNumber: number; uploadedBy: string; uploadedAt: string }): Promise<void> {
+  await supabase.from("photos").insert({
+    id: photo.id,
+    team_id: teamId,
+    url: photo.url,
+    label: photo.label,
+    photo_type: photo.photoType,
+    team_number: photo.teamNumber,
+    uploaded_by: photo.uploadedBy,
+    uploaded_at: photo.uploadedAt,
+  });
+}
+
+export async function deleteTeamPhoto(photoId: string): Promise<void> {
+  await supabase.from("photos").delete().eq("id", photoId);
+}
+
 export async function addMatchToTeam(teamId: string, match: MatchData): Promise<void> {
   const { data, error } = await supabase
     .from("matches")

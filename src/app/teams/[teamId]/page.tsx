@@ -31,6 +31,8 @@ import {
   hasReliabilityDrop,
   suggestPhotoLabel,
   uploadImage,
+  addTeamPhoto,
+  deleteTeamPhoto,
 } from "@/lib/store";
 import {
   Photo,
@@ -192,11 +194,7 @@ export default function TeamProfilePage() {
         uploadedBy: settings.scoutName,
         uploadedAt: new Date().toISOString(),
       };
-      const updated = {
-        ...currentTeam,
-        photos: [...(currentTeam.photos ?? []), photo],
-      };
-      updateTeam(updated);
+      await addTeamPhoto(currentTeam.id, photo);
       setRefreshKey((k) => k + 1);
     }
 
@@ -204,13 +202,7 @@ export default function TeamProfilePage() {
   };
 
   const handleDeletePhoto = async (photoId: string) => {
-    const currentTeam = await getTeam(params.teamId as string);
-    if (!currentTeam) return;
-    const updated = {
-      ...currentTeam,
-      photos: (currentTeam.photos ?? []).filter((p) => p.id !== photoId),
-    };
-    await updateTeam(updated);
+    await deleteTeamPhoto(photoId);
     setRefreshKey((k) => k + 1);
     if (previewPhoto?.id === photoId) setPreviewPhoto(null);
   };
